@@ -1,22 +1,22 @@
-# 🏙️ UrbanPulse
+#  UrbanPulse
 
 Plataforma inteligente para la gestión, seguimiento y resolución de incidencias en infraestructuras urbanas.
 
 ---
 
-## 📚 Documentación del Proyecto
+##  Documentación del Proyecto
 
-* 📄 **[Acuerdo y Diseño de la API REST](docs/api/acuerdo-api.md)**: Estructura de endpoints, códigos HTTP y formato de errores.
-* 🏗️ **[Decisiones de Arquitectura (ADRs)](docs/adr/)**: Registro de decisiones técnicas del proyecto.
-* 📐 **[Modelo C4 (Structurizr)](docs/)**: Diagramas de contexto y contenedores.
+*  **[Acuerdo y Diseño de la API REST](docs/api/acuerdo-api.md)**: Estructura de endpoints, códigos HTTP y formato de errores.
+*  **[Decisiones de Arquitectura (ADRs)](docs/adr/)**: Registro de decisiones técnicas del proyecto.
+*  **[Modelo C4 (Structurizr)](docs/)**: Diagramas de contexto y contenedores.
 
 ---
 
-## 🚀 Cómo Ejecutar el Proyecto
+##  Cómo Ejecutar el Proyecto
 
 ### 1. Requisitos Previos
 
-* Java 17
+* Java 11
 * Docker y Docker Compose
 * Node.js 18+
 * PostgreSQL 18
@@ -29,7 +29,7 @@ docker compose up -d
 
 ---
 
-## 👥 Roles de GitHub de los Integrantes
+##  Roles de GitHub de los Integrantes
 
 * **Maintainer:** Ignacio José García García (Nacho)
 * **Developer:** Todos los integrantes
