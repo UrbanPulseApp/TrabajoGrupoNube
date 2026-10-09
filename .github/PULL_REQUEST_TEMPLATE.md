@@ -1,32 +1,36 @@
 \## Descripción del Cambio
 
-<!-- Describe qué cambios o funcionalidades introduce esta Pull Request -->
-
 
 
 \## Tipo de Cambio
 
-\- \[ ] `feat`: Nueva funcionalidad
 
-\- \[ ] `fix`: Corrección de error
 
-\- \[ ] `docs`: Cambios en la documentación
+\- \[ ] `feat` : Nueva funcionalidad
 
-\- \[ ] `refactor`: Reorganización de código
+\- \[ ] `fix` : Corrección de error
 
-\- \[ ] `test`: Adición o modificación de pruebas
+\- \[ ] `docs` : Cambios en la documentación
 
-\- \[ ] `chore`: Mantenimiento o configuración
+\- \[ ] `refactor` : Reorganización de código
+
+\- \[ ] `test` : Adición o modificación de pruebas
+
+\- \[ ] `chore` : Mantenimiento o configuración
 
 
 
 \## Issue Vinculada
+
+
 
 Closes #
 
 
 
 \## Comprobaciones Previas
+
+
 
 \- \[ ] El código compila correctamente sin errores.
 
