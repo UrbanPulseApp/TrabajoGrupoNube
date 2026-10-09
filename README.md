@@ -48,3 +48,11 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 
 docker compose up -d
 
+
+\### Roles de Github de los Integrantes del proyecto
+Maintainer: Ignacio José García García (Nacho)
+Developer: Todos los integrantes
+Reviewer: Gregorio Merchan Merchan y Francisco Javier Santiburcio Vicente
+Tester: Mario Merino Zapata
+Product Owner: Iván Pedraza Díez
+
