@@ -1,7 +1,7 @@
 package com.urbanpulse.entity;
 
 import com.urbanpulse.enums.IncidentStatus;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,7 +11,7 @@ import java.util.UUID;
 public class Incident {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @Column(nullable = false)

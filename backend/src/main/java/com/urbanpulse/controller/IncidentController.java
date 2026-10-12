@@ -3,7 +3,7 @@ package com.urbanpulse.controller;
 import com.urbanpulse.dto.CreateIncidentRequest;
 import com.urbanpulse.dto.IncidentResponse;
 import com.urbanpulse.service.IncidentService;
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

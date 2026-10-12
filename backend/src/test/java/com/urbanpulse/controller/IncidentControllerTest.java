@@ -27,15 +27,14 @@ class IncidentControllerTest {
     @Test
     void shouldCreateIncident() throws Exception {
 
-        String json = """
-                {
-                    "title": "Semáforo averiado",
-                    "description": "El semáforo permanece en rojo",
-                    "category": "TRAFFIC_LIGHT",
-                    "latitude": 36.7213,
-                    "longitude": -4.4214
-                }
-                """;
+        //Nacho: He añadido los saltos de línea porque en java 11 no funciona como en la versión anterior.
+        String json = "{\n" +
+                "    \"title\": \"Semáforo averiado\",\n" +
+                "    \"description\": \"El semáforo permanece en rojo\",\n" +
+                "    \"category\": \"TRAFFIC_LIGHT\",\n" +
+                "    \"latitude\": 36.7213,\n" +
+                "    \"longitude\": -4.4214\n" +
+                "}";
 
         mockMvc.perform(
                         post("/api/incidents")
