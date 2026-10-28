@@ -1,15 +1,15 @@
-# 🏙️ UrbanPulse
+#  UrbanPulse
 
 Plataforma inteligente para la gestión, seguimiento y resolución de incidencias en infraestructuras urbanas.
 
 ---
 
-## 📌 ¿Qué es UrbanPulse?
+##  ¿Qué es UrbanPulse?
 **UrbanPulse** es una solución integral diseñada para conectar a los ciudadanos con la administración pública municipal. Permite reportar desperfectos en la vía pública (calzadas, iluminación, mobiliario urbano), gestionarlos mediante flujos de trabajo validados y asignar tareas de mantenimiento a técnicos especializados en tiempo real.
 
 ---
 
-## ✨ Características Principales
+##  Características Principales
 * **Gestión de Incidencias**: Creación, consulta y seguimiento del ciclo de vida de reportes urbanos.
 * **Geolocalización e Integración Urbana**: Mapeo visual de avisos e integración con contexto ambiental/urbano.
 * **Control de Acceso Basado en Roles (RBAC)**: Vistas y permisos adaptados para Ciudadanos, Operadores y Técnicos.
@@ -18,7 +18,7 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 
 ---
 
-## 🛠️ Tecnologías Utilizadas y Justificación
+##  Tecnologías Utilizadas y Justificación
 
 | Tecnología | Rol en el Proyecto | ¿Por qué se utiliza? |
 | :--- | :--- | :--- |
@@ -30,18 +30,18 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 
 ---
 
-## 📚 Documentación del Repositorio
+##  Documentación del Repositorio
 
-* 🏗️ **[Arquitectura del Sistema](docs/architecture.md)**: Estructura general, componentes y modelos C4.
-* 📄 **[Diseño de la API REST](docs/api/acuerdo-api.md)**: Contrato de endpoints, códigos HTTP y formato de errores.
-* 🏛️ **[Decisiones de Arquitectura (ADRs)](docs/adr/)**: Registro formal de decisiones técnicas (monorepo, SGBD, etc.).
-* 🛠️ **[Guía de Desarrollo Local](docs/development.md)**: Requisitos, instalación y ejecución de pruebas.
-* 🚀 **[Guía de Despliegue](docs/deployment.md)**: Instrucciones para empaquetado y ejecución con Docker.
-* 🤝 **[Guía de Contribución](CONTRIBUTING.md)**: Reglas para ramas, Conventional Commits y Pull Requests.
+*  **[Arquitectura del Sistema](docs/architecture.md)**: Estructura general, componentes y modelos C4.
+*  **[Diseño de la API REST](docs/api/acuerdo-api.md)**: Contrato de endpoints, códigos HTTP y formato de errores.
+*  **[Decisiones de Arquitectura (ADRs)](docs/adr/)**: Registro formal de decisiones técnicas (monorepo, SGBD, etc.).
+*  **[Guía de Desarrollo Local](docs/development.md)**: Requisitos, instalación y ejecución de pruebas.
+*  **[Guía de Despliegue](docs/deployment.md)**: Instrucciones para empaquetado y ejecución con Docker.
+*  **[Guía de Contribución](CONTRIBUTING.md)**: Reglas para ramas, Conventional Commits y Pull Requests.
 
 ---
 
-## 👥 Equipo del Proyecto
+##  Equipo del Proyecto
 * **Maintainer:** Ignacio José García García (Nacho)
 * **Product Owner:** Iván Pedraza Díez
 * **Tester:** Mario Merino Zapata
