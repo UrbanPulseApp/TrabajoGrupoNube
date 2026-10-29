@@ -1,3 +1,11 @@
+---
+name: 'Plantilla de Issue General'
+about: Plantilla estándar para la creación de tareas y funcionalidades del proyecto
+title: ''
+labels: ''
+assignees: ''
+---
+
 ## Descripción
 Como [Rol / Developer], debo [propósito claro de la issue], para que [beneficio o funcionalidad esperada en el sistema] (RFXX).
 
@@ -9,7 +17,6 @@ Como [Rol / Developer], debo [propósito claro de la issue], para que [beneficio
 
 ## Requisitos y Criterios del Proyecto
 - **RFXX:** [Nombre y descripción breve del requisito funcional relacionado].
-- **RFYY:** [Nombre y descripción breve de otro requisito funcional o pauta del proyecto].
 
 ## Definition of Done (DoD)
 - [ ] El código compila correctamente sin errores ni advertencias graves en el entorno de desarrollo.
