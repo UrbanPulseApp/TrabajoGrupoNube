@@ -2,6 +2,8 @@
 
 Interfaz ciudadana de UrbanPulse construida con React, Vite y React Leaflet.
 
+**Requiere Node >= 18.** La versión recomendada para este proyecto es Node 20 (indicada en `.nvmrc`).
+
 ## Desarrollo local
 
 1. Inicia el backend Spring Boot en `http://localhost:8080`.
