@@ -22,11 +22,5 @@ UrbanPulse está diseñado como una **aplicación monolítica modular** basada e
 
 *  [**Diagramas de Arquitectura C4**](diagrama-C4/): Vistas detalladas de Contexto (Nivel 1), Contenedores (Nivel 2) y Componentes (Nivel 3).
 *  [**Acuerdo y Diseño de API REST**](api/acuerdo-api.md): Especificación de endpoints, códigos HTTP y estructura de respuesta.
-*  [**Registro de Decisiones de Arquitectura (ADRs)**](adr/):
-
-  * [ADR-001: Adopción de Arquitectura Monorepo](adr/001-adopcion-de-arquitectura-monorepo.md)
-  * [ADR-002: Estrategia de Persistencia con Doble SGBD](adr/002-estrategia-de-persistencia-con-doble-sgbd.md)
-  * [ADR-003: Compatibilidad con Java 11 y Spring Boot](adr/003-compatibilidad-con-java-11-y-spring-boot.md)
-  * [ADR-004: Patrón Adapter y DTO para Servicios Externos](adr/004-patron-adapter-y-dto-para-servicios-externos.md)
-  * [ADR-005: Manejo Centralizado de Excepciones](adr/005-manejo-centralizado-de-excepciones.md)
+*  [**Registro de Decisiones de Arquitectura (ADRs)**](adr/)
 
