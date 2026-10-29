@@ -1,11 +1,3 @@
----
-name: 'Plantilla de Issue General'
-about: Plantilla estándar para la creación de tareas y funcionalidades del proyecto
-title: ''
-labels: ''
-assignees: ''
----
-
 ## Descripción
 Como [Rol / Developer], debo [propósito claro de la issue], para que [beneficio o funcionalidad esperada en el sistema] (RFXX).
 
