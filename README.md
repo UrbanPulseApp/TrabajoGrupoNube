@@ -18,7 +18,6 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 * **Cuentas y permisos**: Registro ciudadano, inicio/cierre de sesión y autorización por rol en operaciones municipales.
 * **Tratamiento Resiliente de Errores**: Respuestas de API estandarizadas con trazabilidad mediante UUID.
 
-> Los módulos `UrbanAsset`, `ExternalObservation` y `UrbanContext` todavía no están implementados.
 
 ---
 
