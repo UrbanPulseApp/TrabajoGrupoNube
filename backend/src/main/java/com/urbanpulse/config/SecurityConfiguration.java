@@ -34,16 +34,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper) {
+    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.objectMapper = objectMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityContextRepository securityContextRepository() {
@@ -69,7 +67,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userService).passwordEncoder(passwordEncoder);
     }
 
     @Override
