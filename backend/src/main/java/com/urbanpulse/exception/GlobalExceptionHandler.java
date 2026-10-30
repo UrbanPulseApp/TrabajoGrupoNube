@@ -1,6 +1,7 @@
 package com.urbanpulse.exception;
 
 import com.urbanpulse.dto.ApiError;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -99,6 +100,9 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiError> build(HttpStatus status, String code, String title,
                                            String detail, HttpServletRequest request,
                                            List<ApiError.FieldError> errors) {
+        // 1. Generar un único ID de petición para mantener la coherencia
+        String requestId = ApiError.newRequestId();
+
         ApiError error = new ApiError();
         error.setType("https://api.urbanpulse.com/problems/" + code.toLowerCase());
         error.setTitle(title);
@@ -106,9 +110,14 @@ public class GlobalExceptionHandler {
         error.setCode(code);
         error.setDetail(detail);
         error.setInstance(request.getRequestURI());
-        error.setRequestId(ApiError.newRequestId());
+        error.setRequestId(requestId);
         error.setErrors(errors);
 
-        return ResponseEntity.status(status).body(error);
+        // 2. Crear las cabeceras HTTP e incluir X-Request-ID (Requisito de aceptación)
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Request-ID", requestId);
+
+        // 3. Devolver la respuesta HTTP con status, cabeceras y cuerpo JSON
+        return ResponseEntity.status(status).headers(headers).body(error);
     }
 }
