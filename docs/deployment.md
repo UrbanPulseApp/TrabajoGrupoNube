@@ -1,71 +1,51 @@
-#  Guía de Despliegue - UrbanPulse
+# Guía de empaquetado y ejecución - UrbanPulse
 
-Este documento detalla el procedimiento para empaquetar y desplegar la aplicación UrbanPulse mediante contenedores Docker.
+La configuración Docker actual levanta PostgreSQL. El backend y el frontend se ejecutan o empaquetan por separado; `docker-compose.yml` todavía no contiene servicios de aplicación.
 
----
+## Desarrollo local
 
-##  1. Empaquetado de la Aplicación
+1. En la raíz del repositorio, inicia PostgreSQL:
 
-Antes del despliegue en un entorno de producción o pruebas, se debe realizar el empaquetado de los módulos:
+   ```bash
+   docker compose up -d postgres
+   ```
 
-### Backend (Spring Boot)
-Generar el archivo ejecutable `.jar`:
+2. En otra terminal, inicia Spring Boot:
+
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+   Para crear el administrador inicial, establece `URBANPULSE_ADMIN_EMAIL` y `URBANPULSE_ADMIN_PASSWORD` en el entorno de ejecución. Usa una contraseña de al menos 12 caracteres; no hay credenciales por defecto.
+
+3. En una tercera terminal, inicia Vite:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+   Abre `http://localhost:5173`; la página de acceso está en `/login`. Vite reenvía `/api` a `http://localhost:8080`.
+
+## Empaquetado
+
 ```bash
 cd backend
 mvn clean package -DskipTests
-```
 
-### Frontend (React)
-Generar los archivos estáticos de producción:
-```bash
-cd frontend
+cd ../frontend
 npm install
 npm run build
 ```
 
----
+Spring Boot produce el JAR en `backend/target/` y Vite genera los recursos en `frontend/dist/`.
 
-##  2. Despliegue con Docker Compose
+## Despliegue y seguridad
 
-El proyecto cuenta con un archivo `docker-compose.yml` en la raíz que orquesta los servicios necesarios.
+La API usa sesiones HttpOnly y protección CSRF. En producción debe servirse detrás de HTTPS para proteger las credenciales y cookies durante el transporte. Configura un administrador inicial mediante secretos de entorno; no guardes esas credenciales en Git ni dejes cuentas predeterminadas.
 
-1. **Configurar las variables de entorno**:
-   Crea el archivo `.env` en la raíz copiando la plantilla de ejemplo:
-   ```bash
-   cp .env.example .env
-   ```
+Las evidencias se guardan en `uploads/attachments` relativo al directorio desde el que se inicia el backend. Configura `ATTACHMENTS_DIRECTORY` con una ruta persistente, móntala con permisos de escritura y respalda sus archivos junto con PostgreSQL. La base de datos y el almacén de adjuntos se respaldan por separado.
 
-2. **Levantar los contenedores**:
-   ```bash
-   docker compose up -d --build
-   ```
-
-3. **Comprobar el estado de los servicios**:
-   ```bash
-   docker compose ps
-   ```
-
----
-
-##  3. Monitoreo y Verificación de Salud
-
-Para comprobar el correcto funcionamiento del sistema tras el despliegue:
-
-* **Consultar los logs del sistema**:
-  ```bash
-  docker compose logs -f
-  ```
-
-* **Comprobar el estado de PostgreSQL**:
-  ```bash
-  docker exec -it urbanpulse-db pg_isready
-  ```
-
----
-
-##  4. Detención del Servicio
-
-Para detener los contenedores y liberar los recursos:
-```bash
-docker compose down
-```
+Las operaciones de cambio de estado y asignación están protegidas por rol. El Compose actual no despliega ni el backend ni el frontend.

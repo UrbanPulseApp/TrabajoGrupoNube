@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getIncidentAttachmentUrl, getIncidentAttachments, getIncidentStatusChanges, getIncidents } from "../services/IncidentService.js";
+import IncidentOperations from "./IncidentOperations.jsx";
 import "./IncidentBoard.css";
 
 const statuses = [
@@ -16,7 +17,7 @@ function formatDate(value) {
     .format(new Date(value));
 }
 
-export default function IncidentBoard() {
+export default function IncidentBoard({ refreshKey = 0, currentUser, onChanged }) {
   const [filters, setFilters] = useState({ q: "", status: "", category: "" });
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -45,7 +46,7 @@ export default function IncidentBoard() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [filters, page]);
+  }, [filters, page, refreshKey]);
 
   function updateFilter(event) {
     setPage(0);
@@ -100,6 +101,7 @@ export default function IncidentBoard() {
                 <div className="incident-row-meta"><span>{categories.find(([value]) => value === incident.category)?.[1] || incident.category || "Sin categoría"}</span><span>⌖ {incident.location?.latitude?.toFixed(4)}, {incident.location?.longitude?.toFixed(4)}</span></div>
               </div>
               <button className="history-button" type="button" onClick={() => toggleHistory(incident.id)}>{historyId === incident.id ? "Ocultar detalles" : "Historial y evidencias"}<span aria-hidden="true">{historyId === incident.id ? "⌃" : "⌄"}</span></button>
+              {currentUser && ["OPERATOR", "TECHNICIAN", "ADMIN"].includes(currentUser.role) && <IncidentOperations incident={incident} role={currentUser.role} onChanged={onChanged} />}
               {historyId === incident.id && (
                 <div className="incident-history">
                   <strong>Historial de estado</strong>

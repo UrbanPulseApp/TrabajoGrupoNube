@@ -1,83 +1,74 @@
-# Diseño de API REST - UrbanPulse
+# API REST - UrbanPulse
 
-Este documento define la estructura de la API para UrbanPulse. La API debe estar centrada en recursos (usando sustantivos en plural) y no en acciones, delegando la intención de la operación al método HTTP.
+La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan sesión web y requieren el token CSRF.
 
-## 1. Rutas Principales (Endpoints)
+## Autenticación y cuentas
 
-### 1.1 Recurso: Incidencias (/api/incidents)
+| Método y ruta | Acceso | Función |
+|---|---|---|
+| `GET /api/auth/csrf` | Público | Obtiene el token que debe enviarse como `X-XSRF-TOKEN` en operaciones de escritura. |
+| `POST /api/auth/login` | Público + CSRF | Inicia sesión con correo y contraseña y devuelve el perfil sin contraseña. |
+| `GET /api/auth/me` | Sesión iniciada | Devuelve el perfil de la sesión actual. |
+| `POST /api/auth/logout` | Sesión iniciada + CSRF | Cierra la sesión. |
+| `POST /api/users` | Público + CSRF | Registra una cuenta ciudadana. El cliente no puede elegir su rol. |
+| `POST /api/admin/users` | `ADMIN` + CSRF | Crea cuentas con rol municipal. |
 
-* **POST /api/incidents**: Registra un nuevo reporte.
-* **GET /api/incidents**: Obtiene el catálogo de incidencias. Los filtros, la ordenación y la paginación se aplicarán utilizando parámetros de consulta (query parameters), por ejemplo: `?status=VALIDATED&sort=-priority`.
-* **GET /api/incidents/{id}**: Consulta los detalles de una incidencia específica identificada por su parámetro de ruta (path parameter).
-* **PATCH /api/incidents/{id}**: Modifica parcialmente un recurso, enviando en el cuerpo (body) únicamente los campos que deben cambiar (ej. para pasar el estado a VALIDATED o asignar un técnico).
+Las contraseñas se guardan con BCrypt. La cookie de sesión es `HttpOnly`; la cookie `XSRF-TOKEN` permite al frontend adjuntar el token CSRF. El primer administrador se crea al iniciar el backend cuando están definidas `URBANPULSE_ADMIN_EMAIL` y `URBANPULSE_ADMIN_PASSWORD`. No se usan credenciales predeterminadas.
 
-### 1.2 Recurso: Usuarios (/api/users)
+Roles disponibles: `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN` y `ANALYST`. El registro público siempre crea `CITIZEN`; solo `ADMIN` puede asignar otros roles.
 
-* **POST /api/users**: Crea un nuevo usuario en la plataforma.
-* **GET /api/users/{id}**: Recupera la información detallada de un usuario.
+## Permisos
 
-## 2. Códigos de Estado HTTP
+| Operación | Permiso |
+|---|---|
+| Listar/consultar incidencias, historial y descargar evidencias | Público |
+| Registrar incidencias y subir evidencias | `CITIZEN`, `OPERATOR`, `ADMIN` |
+| Cambiar estado de una incidencia | `OPERATOR`, `ADMIN` |
+| Crear asignaciones | `OPERATOR`, `ADMIN` |
+| Listar asignaciones | `OPERATOR`, `TECHNICIAN`, `ADMIN` |
+| Cerrar o cancelar asignaciones | `OPERATOR`, `ADMIN` |
+| Crear cuentas con roles municipales | `ADMIN` |
 
-**Éxito (2xx):**
-* **200 OK**: La operación se realizó correctamente.
-* **201 Created**: El recurso se creó con éxito tras una petición POST.
-* **204 No Content**: Operación correcta, pero sin cuerpo de respuesta.
+Las respuestas públicas no incluyen correos, contraseñas ni el identificador del reportero. La asociación de incidencias a cuentas ciudadanas y la vista de “mis incidencias” todavía no está modelada.
 
-**Errores del Cliente (4xx):**
-* **400 Bad Request**: La petición está mal formada.
-* **401 Unauthorized**: Falta autenticación o el token es inválido.
-* **403 Forbidden**: El usuario carece de permisos para realizar esa acción.
-* **404 Not Found**: El recurso o identificador solicitado no existe.
-* **422 Unprocessable Entity**: Los datos tienen el formato correcto, pero fallan en las reglas de validación del dominio.
+## Incidencias
 
-**Errores del Servidor (5xx):**
-* **500 Internal Server Error**: Error interno e inesperado en el servidor.
-* **503 Service Unavailable**: El servicio externo o la base de datos no están disponibles.
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents` | Registra una incidencia en `REPORTED` y crea su evento inicial. |
+| `GET /api/incidents` | Lista con `status`, `category`, `q`, `from`, `to`, `page`, `size` (1-100) y `sort`. |
+| `GET /api/incidents/{id}` | Consulta el detalle. |
+| `PATCH /api/incidents/{id}` | Cambia estado según la máquina de estados y conserva el motivo en historial. |
+| `GET /api/incidents/{id}/status-changes` | Devuelve el historial cronológico. |
 
-## 3. Estructura Común de Errores
+Ejemplo: `GET /api/incidents?status=REPORTED&q=farola&page=0&size=10&sort=-createdAt`.
 
-Es recomendable separar el código HTTP, el código interno del backend, el mensaje humano, los detalles de campo y el identificador de trazabilidad. Todos los errores devueltos por la API de UrbanPulse seguirán estrictamente este formato unificado:
+El PATCH recibe `{"status":"VALIDATED","reason":"Datos suficientes"}`. `reason` es obligatorio para `REJECTED`. Transiciones admitidas: `REPORTED → VALIDATED/REJECTED`, `VALIDATED → ASSIGNED/REJECTED`, `ASSIGNED → IN_PROGRESS/VALIDATED`, `IN_PROGRESS → RESOLVED`, `RESOLVED → CLOSED/REOPENED` y `REOPENED → ASSIGNED/IN_PROGRESS`.
 
-Ejemplo de respuesta para un error:
+## Asignaciones
 
-```json
-{
-  "type": "[https://api.urbanpulse.com/problems/validation-error](https://api.urbanpulse.com/problems/validation-error)",
-  "title": "Validation failed",
-  "status": 422,
-  "code": "VALIDATION_ERROR",
-  "detail": "Two fields contain invalid values.",
-  "instance": "/api/incidents",
-  "requestId": "req_8Xy3Z",
-  "errors": [
-    {
-      "field": "title",
-      "code": "MISSING_FIELD",
-      "message": "The title is required."
-    }
-  ]
-}
-```
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents/{id}/assignments` | Asigna una incidencia validada o reabierta a un departamento y opcionalmente equipo/técnico. |
+| `GET /api/incidents/{id}/assignments` | Lista las asignaciones. |
+| `PATCH /api/incidents/{id}/assignments/{assignmentId}` | Cierra una asignación activa como `COMPLETED` o `CANCELLED`. |
 
-## 4. Estructura de Respuestas (DTOs)
+Las notas de un PATCH se agregan a las notas existentes. Cerrar una asignación no resuelve automáticamente la incidencia.
 
-Para evitar exponer el modelo de base de datos directamente, las respuestas utilizarán DTOs (Data Transfer Objects) en formato JSON.
+## Evidencias
 
-Ejemplo de respuesta para una Incidencia (`GET /api/incidents/{id}`):
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents/{id}/attachments` | Sube `multipart/form-data` con campo `file`. Hasta 4 evidencias por incidencia, JPG/PNG/WEBP/PDF, máximo 10 MB cada una. |
+| `GET /api/incidents/{id}/attachments` | Lista metadatos. |
+| `GET /api/incidents/{id}/attachments/{attachmentId}` | Descarga el archivo. |
 
-```json
-{
-  "id": "INC-1024",
-  "title": "Semáforo averiado en Alameda Principal",
-  "description": "El semáforo de peatones no cambia a verde.",
-  "status": "VALIDATED",
-  "category": "TRAFFIC_LIGHT",
-  "priority": "HIGH",
-  "location": {
-    "latitude": 36.7184,
-    "longitude": -4.4201,
-    "district": "Centro"
-  },
-  "createdAt": "2026-10-02T10:30:00Z"
-}
-```
+Los bytes se guardan fuera de PostgreSQL en `uploads/attachments` por defecto. Configura `ATTACHMENTS_DIRECTORY` con almacenamiento persistente al desplegar.
+
+## Errores
+
+Las respuestas de error incluyen `type`, `title`, `status`, `code`, `detail`, `instance`, `requestId` y, en validaciones, `errors`. `X-Request-ID` también se incluye en la respuesta. Códigos usuales: `400` entrada inválida, `401` sesión ausente o credenciales inválidas, `403` rol insuficiente/CSRF, `404` recurso inexistente, `409` correo duplicado, `413` archivo grande y `422` regla de dominio.
+
+## Fuera del alcance actual
+
+`UrbanAsset`, `ExternalObservation` y `UrbanContext` siguen pendientes. También quedan pendientes la asociación de reportes al ciudadano para consultar únicamente sus propios avisos, recuperación de contraseña y verificación de correo.
