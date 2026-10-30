@@ -1,6 +1,6 @@
 package com.urbanpulse.external.service;
 
-import com.urbanpulse.external.context.UrbanContext;
+import com.urbanpulse.entity.UrbanContext;
 import com.urbanpulse.external.location.LocationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
