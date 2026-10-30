@@ -1,11 +1,13 @@
 package com.urbanpulse.mapper;
 
-import com.urbanpulse.entity.ExternalObservation;
 import com.urbanpulse.entity.UrbanContext;
+import com.urbanpulse.external.context.ExternalObservation;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class UrbanContextMapper {
@@ -14,44 +16,25 @@ public class UrbanContextMapper {
         UrbanContext entity = new UrbanContext();
         entity.setIncidentId(incidentId);
 
-        if (dto == null) {
+        if (dto != null) {
+            entity.setWeatherSummary(dto.getWeatherSummary());
+            entity.setTrafficStatus(dto.getTrafficStatus());
+            entity.setCapturedAt(dto.getCapturedAt() != null ? dto.getCapturedAt() : LocalDateTime.now());
+
+            if (dto.getObservations() != null) {
+                List<com.urbanpulse.entity.ExternalObservation> entityObsList = dto.getObservations().stream()
+                        .map(this::toObservationEntity)
+                        .collect(Collectors.toList());
+                entity.setObservations(entityObsList);
+            }
+        } else {
             entity.setWeatherSummary("No disponible (degradación controlada)");
             entity.setTrafficStatus("No disponible (degradación controlada)");
             entity.setCapturedAt(LocalDateTime.now());
-            return entity;
-        }
-
-        entity.setWeatherSummary(dto.getWeatherSummary() != null ? dto.getWeatherSummary() : "Sin datos");
-        entity.setTrafficStatus(dto.getTrafficStatus() != null ? dto.getTrafficStatus() : "Sin datos");
-        entity.setCapturedAt(dto.getCapturedAt() != null ? dto.getCapturedAt() : LocalDateTime.now());
-
-        if (dto.getObservations() != null) {
-            for (com.urbanpulse.external.context.ExternalObservation obsDto : dto.getObservations()) {
-                ExternalObservation obsEntity = new ExternalObservation();
-                obsEntity.setSource(obsDto.getSource() != null ? obsDto.getSource() : "UNKNOWN");
-                obsEntity.setMetricName(obsDto.getMetricName());
-                obsEntity.setObservationTimestamp(
-                        obsDto.getObservationTimestamp() != null ? obsDto.getObservationTimestamp() : LocalDateTime.now()
-                );
-                obsEntity.setIngestionTimestamp(
-                        obsDto.getIngestionTimestamp() != null ? obsDto.getIngestionTimestamp() : LocalDateTime.now()
-                );
-                obsEntity.setUnit(obsDto.getUnit());
-
-                if (obsDto.getValue() instanceof Number) {
-                    obsEntity.setValue(((Number) obsDto.getValue()).doubleValue());
-                } else {
-                    obsEntity.setValue(null);
-                }
-
-                obsEntity.setQualityScore(obsDto.getQualityScore());
-                entity.addObservation(obsEntity);
-            }
         }
 
         return entity;
     }
-
 
     public com.urbanpulse.external.context.UrbanContext toDto(UrbanContext entity) {
         if (entity == null) {
@@ -65,20 +48,50 @@ public class UrbanContextMapper {
         dto.setCapturedAt(entity.getCapturedAt());
 
         if (entity.getObservations() != null) {
-            for (ExternalObservation obsEntity : entity.getObservations()) {
-                com.urbanpulse.external.context.ExternalObservation obsDto = new com.urbanpulse.external.context.ExternalObservation();
-                obsDto.setSource(obsEntity.getSource());
-                obsDto.setMetricName(obsEntity.getMetricName());
-                obsDto.setObservationTimestamp(obsEntity.getObservationTimestamp());
-                obsDto.setIngestionTimestamp(obsEntity.getIngestionTimestamp());
-                obsDto.setUnit(obsEntity.getUnit());
-                obsDto.setValue(obsEntity.getValue());
-                obsDto.setQualityScore(obsEntity.getQualityScore());
-
-                dto.getObservations().add(obsDto);
-            }
+            List<ExternalObservation> dtoObsList = entity.getObservations().stream()
+                    .map(this::toObservationDto)
+                    .collect(Collectors.toList());
+            dto.setObservations(dtoObsList);
         }
 
         return dto;
+    }
+
+    private com.urbanpulse.entity.ExternalObservation toObservationEntity(ExternalObservation dto) {
+        com.urbanpulse.entity.ExternalObservation entity = new com.urbanpulse.entity.ExternalObservation();
+        entity.setSource(dto.getSource());
+        entity.setMetricName(dto.getMetricName());
+        entity.setUnit(dto.getUnit());
+        entity.setValue(convertToDouble(dto.getValue()));
+        entity.setQualityScore(dto.getQualityScore());
+        entity.setObservationTimestamp(dto.getObservationTimestamp());
+        entity.setIngestionTimestamp(dto.getIngestionTimestamp());
+        return entity;
+    }
+
+    private ExternalObservation toObservationDto(com.urbanpulse.entity.ExternalObservation entity) {
+        ExternalObservation dto = new ExternalObservation();
+        dto.setSource(entity.getSource());
+        dto.setMetricName(entity.getMetricName());
+        dto.setUnit(entity.getUnit());
+        dto.setValue(convertToDouble(entity.getValue()));
+        dto.setQualityScore(entity.getQualityScore());
+        dto.setObservationTimestamp(entity.getObservationTimestamp());
+        dto.setIngestionTimestamp(entity.getIngestionTimestamp());
+        return dto;
+    }
+
+    private Double convertToDouble(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof Number) {
+            return ((Number) rawValue).doubleValue();
+        }
+        try {
+            return Double.valueOf(rawValue.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
