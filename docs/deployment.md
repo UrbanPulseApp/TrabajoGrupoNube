@@ -1,71 +1,47 @@
-#  Guía de Despliegue - UrbanPulse
+# Guía de empaquetado y ejecución - UrbanPulse
 
-Este documento detalla el procedimiento para empaquetar y desplegar la aplicación UrbanPulse mediante contenedores Docker.
+La configuración Docker actual levanta PostgreSQL. El backend y el frontend se ejecutan o empaquetan por separado; el `docker-compose.yml` aún no contiene servicios de aplicación.
 
----
+## Desarrollo local
 
-##  1. Empaquetado de la Aplicación
+1. En la raíz, arranca PostgreSQL:
 
-Antes del despliegue en un entorno de producción o pruebas, se debe realizar el empaquetado de los módulos:
+   ```bash
+   docker compose up -d postgres
+   ```
 
-### Backend (Spring Boot)
-Generar el archivo ejecutable `.jar`:
+2. En otra terminal, inicia Spring Boot:
+
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+3. En una tercera terminal, inicia Vite:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+El frontend está disponible en `http://localhost:5173`; Vite reenvía `/api` a `http://localhost:8080`.
+
+## Empaquetado
+
 ```bash
 cd backend
 mvn clean package -DskipTests
-```
 
-### Frontend (React)
-Generar los archivos estáticos de producción:
-```bash
-cd frontend
+cd ../frontend
 npm install
 npm run build
 ```
 
----
+El backend produce el JAR en `backend/target/` y Vite genera los recursos en `frontend/dist/`.
 
-##  2. Despliegue con Docker Compose
+## PostgreSQL y evidencias
 
-El proyecto cuenta con un archivo `docker-compose.yml` en la raíz que orquesta los servicios necesarios.
+La configuración de base de datos usa `DATABASE_URL`, `POSTGRES_USER` y `POSTGRES_PASSWORD`; consulta `.env.example`. Las evidencias se escriben en `uploads/attachments` relativo al directorio desde el que se inicia el backend. En un servidor configura `ATTACHMENTS_DIRECTORY` con una ruta persistente y monta allí un volumen con permisos de escritura. PostgreSQL y los ficheros deben respaldarse por separado.
 
-1. **Configurar las variables de entorno**:
-   Crea el archivo `.env` en la raíz copiando la plantilla de ejemplo:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Levantar los contenedores**:
-   ```bash
-   docker compose up -d --build
-   ```
-
-3. **Comprobar el estado de los servicios**:
-   ```bash
-   docker compose ps
-   ```
-
----
-
-##  3. Monitoreo y Verificación de Salud
-
-Para comprobar el correcto funcionamiento del sistema tras el despliegue:
-
-* **Consultar los logs del sistema**:
-  ```bash
-  docker compose logs -f
-  ```
-
-* **Comprobar el estado de PostgreSQL**:
-  ```bash
-  docker exec -it urbanpulse-db pg_isready
-  ```
-
----
-
-##  4. Detención del Servicio
-
-Para detener los contenedores y liberar los recursos:
-```bash
-docker compose down
-```
+El Compose actual no despliega el JAR ni los recursos de Vite. La API tampoco aplica todavía autenticación/autorización; no expongas las operaciones de cambio de estado o asignación a Internet hasta incorporar RBAC.

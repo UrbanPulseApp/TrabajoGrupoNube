@@ -1,5 +1,6 @@
 # Compilación Java y Maven
 target/
+backend/uploads/
 *.class
 *.jar
 *.war

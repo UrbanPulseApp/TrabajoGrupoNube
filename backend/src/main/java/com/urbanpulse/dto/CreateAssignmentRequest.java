@@ -2,17 +2,20 @@ package com.urbanpulse.dto;
 
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.UUID;
 
 public class CreateAssignmentRequest {
 
     @NotBlank(message = "El departamento es obligatorio")
+    @Size(max = 120, message = "El departamento no puede superar 120 caracteres")
     private String department;
 
     private UUID teamId;
 
     private UUID technicianId;
 
+    @Size(max = 1000, message = "Las notas no pueden superar los 1000 caracteres")
     private String notes;
 
     public CreateAssignmentRequest() {

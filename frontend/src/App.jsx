@@ -1,4 +1,5 @@
 import IncidentForm from "./components/IncidentForm.jsx";
+import IncidentBoard from "./components/IncidentBoard.jsx";
 
 function BrandMark() {
   return (
@@ -20,11 +21,12 @@ function Header() {
       </a>
       <nav className="header-nav" aria-label="Navegación principal">
         <a className="nav-link active" href="#reportar">Reportar incidencia</a>
+        <a className="nav-link" href="#incidencias">Seguimiento</a>
         <a className="nav-link" href="#como-funciona">Cómo funciona</a>
       </nav>
       <a className="header-action" href="#reportar">
         <span className="online-dot" />
-        <span>Servicio activo</span>
+        <span>Ciudadanía · Málaga</span>
       </a>
     </header>
   );
@@ -75,6 +77,7 @@ function App() {
       <main>
         <Intro />
         <Steps />
+        <IncidentBoard />
         <section className="report-section" id="reportar">
           <div className="report-heading">
             <div><span className="section-kicker">TU VOZ CUENTA</span><h2>¿Qué está pasando?</h2></div>

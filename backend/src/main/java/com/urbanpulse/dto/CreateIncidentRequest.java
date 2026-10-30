@@ -4,15 +4,19 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class CreateIncidentRequest {
 
     @NotBlank(message = "El título es obligatorio")
+    @Size(max = 120, message = "El título no puede superar los 120 caracteres")
     private String title;
 
     @NotBlank(message = "La descripción es obligatoria")
+    @Size(max = 1000, message = "La descripción no puede superar los 1000 caracteres")
     private String description;
 
+    @Size(max = 80, message = "La categoría no puede superar los 80 caracteres")
     private String category;
 
     @NotNull(message = "La latitud es obligatoria")
