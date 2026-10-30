@@ -1,13 +1,17 @@
 package com.urbanpulse.entity;
 
-import com.urbanpulse.external.location.LocationContext;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,47 +27,55 @@ import java.util.UUID;
 public class UrbanContext {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
-    @Column(nullable = false)
     private UUID incidentId;
 
-    @Column
     private String weatherSummary;
-
-    @Column
     private String trafficStatus;
-
-    @Embedded
-    private LocationContext locationContext;
-
-    @Column(nullable = false)
     private LocalDateTime capturedAt;
 
-    @OneToMany(mappedBy = "urbanContext", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "urban_context_id")
     @Builder.Default
     private List<ExternalObservation> observations = new ArrayList<>();
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.capturedAt == null) {
-            this.capturedAt = LocalDateTime.now();
-        }
+
+    public UUID getIncidentId() {
+        return incidentId;
     }
 
-    public void addObservation(ExternalObservation observation) {
-        if (this.observations == null) {
-            this.observations = new ArrayList<>();
-        }
-        this.observations.add(observation);
-        observation.setUrbanContext(this);
+    public void setIncidentId(UUID incidentId) {
+        this.incidentId = incidentId;
     }
 
-    public void removeObservation(ExternalObservation observation) {
-        if (this.observations != null) {
-            this.observations.remove(observation);
-            observation.setUrbanContext(null);
-        }
+    public String getWeatherSummary() {
+        return weatherSummary;
+    }
+
+    public void setWeatherSummary(String weatherSummary) {
+        this.weatherSummary = weatherSummary;
+    }
+
+    public String getTrafficStatus() {
+        return trafficStatus;
+    }
+
+    public void setTrafficStatus(String trafficStatus) {
+        this.trafficStatus = trafficStatus;
+    }
+
+    public LocalDateTime getCapturedAt() {
+        return capturedAt;
+    }
+
+    public void setCapturedAt(LocalDateTime capturedAt) {
+        this.capturedAt = capturedAt;
+    }
+
+    public List<ExternalObservation> getObservations() {
+        return observations;
+    }
+
+    public void setObservations(List<ExternalObservation> observations) {
+        this.observations = observations;
     }
 }
