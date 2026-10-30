@@ -1,51 +1,42 @@
 package com.urbanpulse.external.service;
 
-import com.urbanpulse.entity.UrbanContext;
+import com.urbanpulse.external.context.ExternalObservation;
+import com.urbanpulse.external.context.UrbanContext;
 import com.urbanpulse.external.location.LocationContext;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.List;
 
-@Slf4j
 @Service
 public class ExternalContextService {
 
-    public UrbanContext fetchUrbanContext(Double latitude, Double longitude) {
-        try {
-            // Consulta a servicios externos de datos abiertos de Málaga (AEMET, DGT, GIS)
-            LocationContext location = LocationContext.builder()
-                    .latitude(latitude)
-                    .longitude(longitude)
-                    .district("Distrito Centro")
-                    .neighborhood("Soho")
-                    .address("Calle Larios")
-                    .precisionMeters(5.0)
-                    .build();
+    private final GeoLocationService geoLocationService;
+    private final WeatherService weatherService;
+    private final TrafficService trafficService;
 
-            return UrbanContext.builder()
-                    .locationContext(location)
-                    .weatherSummary("Despejado, 22ºC")
-                    .trafficStatus("Fluido")
-                    .observations(Collections.emptyList())
-                    .capturedAt(LocalDateTime.now())
-                    .build();
+    public ExternalContextService(GeoLocationService geoLocationService,
+                                  WeatherService weatherService,
+                                  TrafficService trafficService) {
+        this.geoLocationService = geoLocationService;
+        this.weatherService = weatherService;
+        this.trafficService = trafficService;
+    }
 
-        } catch (Exception ex) {
-            // RF26: Degradación controlada - Se registra el problema pero no interrumpe el flujo
-            log.warn("Error consultando servicios contextuales externos: {}. Se genera contexto degradado.", ex.getMessage());
+    public UrbanContext getUrbanContext(Double latitude, Double longitude) {
 
-            return UrbanContext.builder()
-                    .locationContext(LocationContext.builder()
-                            .latitude(latitude)
-                            .longitude(longitude)
-                            .build())
-                    .weatherSummary("No disponible")
-                    .trafficStatus("No disponible")
-                    .observations(Collections.emptyList())
-                    .capturedAt(LocalDateTime.now())
-                    .build();
-        }
+        LocationContext locationContext = geoLocationService.getLocationContext(latitude, longitude);
+        String weatherSummary = weatherService.getWeatherSummary(latitude, longitude);
+        List<ExternalObservation> observations = weatherService.getObservations(latitude, longitude);
+        String trafficStatus = trafficService.getTrafficStatus(latitude, longitude);
+
+        UrbanContext context = new UrbanContext();
+        context.setWeatherSummary(weatherSummary);
+        context.setTrafficStatus(trafficStatus);
+        context.setLocationContext(locationContext);
+        context.setCapturedAt(LocalDateTime.now());
+        context.setObservations(observations);
+
+        return context;
     }
 }

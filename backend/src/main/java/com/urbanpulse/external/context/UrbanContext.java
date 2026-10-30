@@ -1,31 +1,33 @@
 package com.urbanpulse.external.context;
 
+import com.urbanpulse.external.location.LocationContext;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UrbanContext {
 
     private UUID incidentId;
     private String weatherSummary;
     private String trafficStatus;
+    private LocationContext locationContext;
     private LocalDateTime capturedAt;
+
+    @Builder.Default
     private List<ExternalObservation> observations = new ArrayList<>();
 
-    public UrbanContext() {
-    }
-
-    public UrbanContext(UUID incidentId, String weatherSummary, String trafficStatus,
-                        LocalDateTime capturedAt, List<ExternalObservation> observations) {
-        this.incidentId = incidentId;
-        this.weatherSummary = weatherSummary;
-        this.trafficStatus = trafficStatus;
-        this.capturedAt = capturedAt;
-        if (observations != null) {
-            this.observations = observations;
-        }
-    }
 
     public UUID getIncidentId() {
         return incidentId;
@@ -49,6 +51,14 @@ public class UrbanContext {
 
     public void setTrafficStatus(String trafficStatus) {
         this.trafficStatus = trafficStatus;
+    }
+
+    public LocationContext getLocationContext() {
+        return locationContext;
+    }
+
+    public void setLocationContext(LocationContext locationContext) {
+        this.locationContext = locationContext;
     }
 
     public LocalDateTime getCapturedAt() {
