@@ -2,6 +2,7 @@ package com.urbanpulse.controller;
 
 import com.urbanpulse.dto.AssignmentResponse;
 import com.urbanpulse.dto.CreateAssignmentRequest;
+import com.urbanpulse.dto.UpdateAssignmentStatusRequest;
 import com.urbanpulse.service.AssignmentService;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -42,5 +43,13 @@ public class AssignmentController {
                 assignmentService.getByIncident(incidentId);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{assignmentId}")
+    public ResponseEntity<AssignmentResponse> updateAssignment(
+            @PathVariable UUID incidentId,
+            @PathVariable UUID assignmentId,
+            @Valid @RequestBody UpdateAssignmentStatusRequest request) {
+        return ResponseEntity.ok(assignmentService.updateStatus(incidentId, assignmentId, request));
     }
 }

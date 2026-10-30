@@ -2,6 +2,7 @@ package com.urbanpulse.service;
 
 import com.urbanpulse.dto.AssignmentResponse;
 import com.urbanpulse.dto.CreateAssignmentRequest;
+import com.urbanpulse.dto.UpdateAssignmentStatusRequest;
 import com.urbanpulse.entity.Assignment;
 import com.urbanpulse.entity.Incident;
 import com.urbanpulse.entity.StatusChange;
@@ -44,11 +45,14 @@ public class AssignmentService {
                         new ResourceNotFoundException("Incidencia no encontrada: " + incidentId)
                 );
 
-        // RF11: solo una incidencia validada (o ya asignada) puede asignarse.
+        // RF11: solo una incidencia validada o reabierta puede asignarse.
         // RF12: la transición a ASSIGNED debe ser una transición permitida.
         if (!incident.getStatus().canTransitionTo(IncidentStatus.ASSIGNED)) {
             throw new InvalidTransitionException(
                     "No se puede asignar una incidencia en estado " + incident.getStatus());
+        }
+        if (assignmentRepository.existsByIncidentIdAndStatus(incidentId, AssignmentStatus.ACTIVE)) {
+            throw new InvalidTransitionException("La incidencia ya tiene una asignación activa");
         }
 
         Assignment assignment = new Assignment();
@@ -73,11 +77,36 @@ public class AssignmentService {
     }
 
     public List<AssignmentResponse> getByIncident(UUID incidentId) {
-
+        if (!incidentRepository.existsById(incidentId)) {
+            throw new ResourceNotFoundException("Incidencia no encontrada: " + incidentId);
+        }
         return assignmentRepository.findByIncidentId(incidentId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public AssignmentResponse updateStatus(UUID incidentId, UUID assignmentId,
+                                           UpdateAssignmentStatusRequest request) {
+        Assignment assignment = assignmentRepository.findByIdAndIncidentId(assignmentId, incidentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Asignación no encontrada: " + assignmentId));
+        if (assignment.getStatus() != AssignmentStatus.ACTIVE) {
+            throw new InvalidTransitionException("Solo se puede cerrar una asignación activa");
+        }
+        if (request.getStatus() == AssignmentStatus.ACTIVE) {
+            throw new InvalidTransitionException("Una asignación cerrada no puede volver a estar activa");
+        }
+
+        assignment.setStatus(request.getStatus());
+        assignment.setCompletedAt(LocalDateTime.now());
+        if (request.getNotes() != null && !request.getNotes().trim().isEmpty()) {
+            String currentNotes = assignment.getNotes();
+            assignment.setNotes(currentNotes == null || currentNotes.trim().isEmpty()
+                    ? request.getNotes().trim()
+                    : currentNotes + "\n" + request.getNotes().trim());
+        }
+        return mapToResponse(assignmentRepository.save(assignment));
     }
 
     private void registerStatusChange(Incident incident, IncidentStatus newStatus, String reason) {

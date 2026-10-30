@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface StatusChangeRepository extends JpaRepository<StatusChange, UUID> {
 
     List<StatusChange> findByIncidentId(UUID incidentId);
+
+    List<StatusChange> findByIncidentIdOrderByChangedAtAsc(UUID incidentId);
 }

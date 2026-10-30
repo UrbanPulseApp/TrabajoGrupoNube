@@ -1,6 +1,7 @@
 import { useState } from "react";
 import IncidentMap from "./IncidentMap.jsx";
-import { createIncident } from "../services/IncidentService.js";
+import { createIncident, uploadIncidentAttachment } from "../services/IncidentService.js";
+import "./IncidentForm.css";
 
 const initialForm = { title: "", description: "", category: "" };
 
@@ -19,6 +20,7 @@ export default function IncidentForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [createdIncident, setCreatedIncident] = useState(null);
+  const [evidence, setEvidence] = useState([]);
 
   function updateField(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -37,6 +39,25 @@ export default function IncidentForm() {
     );
   }
 
+  function selectEvidence(event) {
+    const selected = Array.from(event.target.files || []);
+    if (selected.length > 4) {
+      setError("Puedes adjuntar como máximo 4 evidencias por incidencia.");
+      event.target.value = "";
+      return;
+    }
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+    const invalid = selected.find((file) => !allowed.has(file.type) || file.size > 10 * 1024 * 1024);
+    if (invalid) {
+      setError(`${invalid.name}: solo se admiten JPG, PNG, WEBP o PDF de hasta 10 MB.`);
+      event.target.value = "";
+      return;
+    }
+    setError("");
+    setEvidence(selected);
+    event.target.value = "";
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
@@ -52,6 +73,15 @@ export default function IncidentForm() {
       setCreatedIncident(incident);
       setForm(initialForm);
       setLocation(null);
+      const uploadErrors = [];
+      for (const file of evidence) {
+        try { await uploadIncidentAttachment(incident.id, file); }
+        catch (uploadError) { uploadErrors.push(`${file.name}: ${uploadError.message}`); }
+      }
+      setEvidence([]);
+      if (uploadErrors.length) {
+        setError(`La incidencia se registró, pero no se pudieron subir algunas evidencias. ${uploadErrors.join("; ")}`);
+      }
     } catch (submitError) {
       setError(submitError.message || "No se pudo enviar el aviso. Inténtalo de nuevo.");
     } finally {
@@ -91,6 +121,12 @@ export default function IncidentForm() {
               <label htmlFor="description">Cuéntanos un poco más <span className="asterisk">*</span></label>
               <textarea id="description" name="description" value={form.description} onChange={updateField} maxLength={1000} placeholder="¿Qué ha ocurrido? Añade cualquier detalle que pueda ser útil…" rows={5} required />
               <div className="textarea-meta"><span>Evita incluir datos personales</span><span>{form.description.length}/1000</span></div>
+            </div>
+            <div className="field-group evidence-field">
+              <label htmlFor="evidence">Añadir evidencias <span className="optional">OPCIONAL · MÁX. 4</span></label>
+              <input id="evidence" className="evidence-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onChange={selectEvidence} />
+              <span className="field-hint">JPG, PNG, WEBP o PDF · hasta 10 MB por archivo</span>
+              {evidence.length > 0 && <ul className="evidence-list">{evidence.map((file) => <li key={`${file.name}-${file.lastModified}`}>{file.name}<button type="button" onClick={() => setEvidence((current) => current.filter((item) => item !== file))} aria-label={`Quitar ${file.name}`}>×</button></li>)}</ul>}
             </div>
           </div>
           <div className="location-field">

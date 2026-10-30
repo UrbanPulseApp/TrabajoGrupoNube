@@ -21,7 +21,7 @@ public class StatusChange {
     private UUID incidentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private IncidentStatus previousStatus;
 
     @Enumerated(EnumType.STRING)

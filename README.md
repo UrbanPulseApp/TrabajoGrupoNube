@@ -11,10 +11,13 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 
 ##  Características Principales
 * **Gestión de Incidencias**: Creación, consulta y seguimiento del ciclo de vida de reportes urbanos.
-* **Geolocalización e Integración Urbana**: Mapeo visual de avisos e integración con contexto ambiental/urbano.
-* **Control de Acceso Basado en Roles (RBAC)**: Vistas y permisos adaptados para Ciudadanos, Operadores y Técnicos.
-* **Panel de Asignación**: Flujo operativo para asignación eficiente de trabajos a brigadas de mantenimiento.
+* **Geolocalización**: Ubicación de avisos en mapa con coordenadas.
+* **Seguimiento de incidencias**: Búsqueda, filtros, paginación e historial de transiciones.
+* **Evidencias**: Carga y descarga de imágenes y documentos asociados al reporte.
+* **Asignaciones**: Flujo básico para asignar y cerrar trabajos municipales.
 * **Tratamiento Resiliente de Errores**: Respuestas de API estandarizadas con trazabilidad mediante UUID.
+
+> La autenticación y autorización por roles, y los módulos `UrbanAsset`, `ExternalObservation` y `UrbanContext`, todavía no están implementados. Las transiciones operativas no deben publicarse en producción hasta proteger la API con RBAC.
 
 ---
 
