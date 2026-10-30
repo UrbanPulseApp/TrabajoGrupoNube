@@ -40,12 +40,16 @@ Este documento describe los requisitos y pasos necesarios para preparar el entor
    ```
    *El servidor estará disponible en `http://localhost:8080`.*
 
+   Para crear el primer administrador, configura `URBANPULSE_ADMIN_EMAIL` y `URBANPULSE_ADMIN_PASSWORD` en las variables de entorno de la configuración de ejecución de IntelliJ antes de iniciar Spring. La contraseña debe tener al menos 12 caracteres. Si ambas variables están vacías, no se crea una cuenta administrativa. Las cuentas ciudadanas se registran desde `/login`; el administrador crea cuentas de operador, técnico y analista mediante `POST /api/admin/users`.
+
 5. **Ejecutar el Frontend (React)**:
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
+
+   La página de acceso está en `http://localhost:5173/login`. El inicio de sesión se conserva en una cookie de sesión HttpOnly; las peticiones de escritura incluyen protección CSRF.
 
 ---
 

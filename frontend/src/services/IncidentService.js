@@ -1,3 +1,5 @@
+import { apiFetch, responseError } from "./ApiClient.js";
+
 const API_URL = (import.meta.env.VITE_API_URL || "/api/incidents").replace(/\/$/, "");
 
 export function getIncidentAttachmentUrl(incidentId, attachmentId) {
@@ -6,7 +8,7 @@ export function getIncidentAttachmentUrl(incidentId, attachmentId) {
 
 export async function createIncident(incident) {
 
-    const response = await fetch(API_URL, {
+    const response = await apiFetch(API_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -14,26 +16,20 @@ export async function createIncident(incident) {
         body: JSON.stringify(incident)
     });
 
-    const data = await response.json().catch(() => null);
-
     if (!response.ok) {
-        throw new Error(
-            data?.detail || data?.message || "Error al crear la incidencia"
-        );
+        throw await responseError(response, "Error al crear la incidencia");
     }
 
-    return data;
+    return response.json();
 }
 
 export async function getIncident(id) {
 
-    const response = await fetch(`${API_URL}/${id}`);
-
-    const data = await response.json().catch(() => null);
+    const response = await apiFetch(`${API_URL}/${id}`);
     if (!response.ok) {
-        throw new Error(data?.detail || data?.message || "No se ha podido obtener la incidencia");
+        throw await responseError(response, "No se ha podido obtener la incidencia");
     }
-    return data;
+    return response.json();
 }
 
 export async function getIncidents(filters = {}, signal) {
@@ -41,42 +37,74 @@ export async function getIncidents(filters = {}, signal) {
     Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") params.set(key, value);
     });
-    const response = await fetch(`${API_URL}?${params.toString()}`, { signal });
-    const data = await response.json().catch(() => null);
+    const response = await apiFetch(`${API_URL}?${params.toString()}`, { signal });
     if (!response.ok) {
-        throw new Error(data?.detail || data?.message || "No se pudo cargar el listado de incidencias");
+        throw await responseError(response, "No se pudo cargar el listado de incidencias");
     }
-    return data;
+    return response.json();
 }
 
 export async function getIncidentStatusChanges(id) {
-    const response = await fetch(`${API_URL}/${id}/status-changes`);
-    const data = await response.json().catch(() => null);
+    const response = await apiFetch(`${API_URL}/${id}/status-changes`);
     if (!response.ok) {
-        throw new Error(data?.detail || data?.message || "No se pudo cargar el historial");
+        throw await responseError(response, "No se pudo cargar el historial");
     }
-    return data;
+    return response.json();
 }
 
 export async function uploadIncidentAttachment(incidentId, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch(`${API_URL}/${incidentId}/attachments`, {
+    const response = await apiFetch(`${API_URL}/${incidentId}/attachments`, {
         method: "POST",
         body: formData,
     });
-    const data = await response.json().catch(() => null);
     if (!response.ok) {
-        throw new Error(data?.detail || data?.message || `No se pudo subir ${file.name}`);
+        throw await responseError(response, `No se pudo subir ${file.name}`);
     }
-    return data;
+    return response.json();
 }
 
 export async function getIncidentAttachments(incidentId) {
-    const response = await fetch(`${API_URL}/${incidentId}/attachments`);
-    const data = await response.json().catch(() => null);
+    const response = await apiFetch(`${API_URL}/${incidentId}/attachments`);
     if (!response.ok) {
-        throw new Error(data?.detail || data?.message || "No se pudieron cargar las evidencias");
+        throw await responseError(response, "No se pudieron cargar las evidencias");
     }
-    return data;
+    return response.json();
+}
+
+export async function patchIncidentStatus(incidentId, status, reason) {
+    const response = await apiFetch(`${API_URL}/${incidentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, reason }),
+    });
+    if (!response.ok) throw await responseError(response, "No se pudo cambiar el estado");
+    return response.json();
+}
+
+export async function getIncidentAssignments(incidentId) {
+    const response = await apiFetch(`${API_URL}/${incidentId}/assignments`);
+    if (!response.ok) throw await responseError(response, "No se pudieron cargar las asignaciones");
+    return response.json();
+}
+
+export async function createIncidentAssignment(incidentId, assignment) {
+    const response = await apiFetch(`${API_URL}/${incidentId}/assignments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(assignment),
+    });
+    if (!response.ok) throw await responseError(response, "No se pudo crear la asignación");
+    return response.json();
+}
+
+export async function updateIncidentAssignment(incidentId, assignmentId, status, notes) {
+    const response = await apiFetch(`${API_URL}/${incidentId}/assignments/${assignmentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, notes }),
+    });
+    if (!response.ok) throw await responseError(response, "No se pudo actualizar la asignación");
+    return response.json();
 }

@@ -14,7 +14,7 @@ const categories = [
   ["OTHER", "Otro"],
 ];
 
-export default function IncidentForm() {
+export default function IncidentForm({ onCreated }) {
   const [form, setForm] = useState(initialForm);
   const [location, setLocation] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,6 +79,7 @@ export default function IncidentForm() {
         catch (uploadError) { uploadErrors.push(`${file.name}: ${uploadError.message}`); }
       }
       setEvidence([]);
+      onCreated?.(incident);
       if (uploadErrors.length) {
         setError(`La incidencia se registró, pero no se pudieron subir algunas evidencias. ${uploadErrors.join("; ")}`);
       }

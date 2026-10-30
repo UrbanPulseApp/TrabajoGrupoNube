@@ -14,6 +14,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -29,6 +31,27 @@ public class GlobalExceptionHandler {
                                                    HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, "NOT_FOUND", "Resource not found",
                 ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex,
+                                                         HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Authentication failed",
+                "El correo o la contraseña no son válidos.", request, null);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleDuplicateEmail(EmailAlreadyExistsException ex,
+                                                         HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXISTS", "Account already exists",
+                "Ya existe una cuenta con ese correo.", request, null);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataConflict(DataIntegrityViolationException ex,
+                                                        HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "DATA_CONFLICT", "Data conflict",
+                "La operación entra en conflicto con datos existentes.", request, null);
     }
 
     @ExceptionHandler(InvalidTransitionException.class)
