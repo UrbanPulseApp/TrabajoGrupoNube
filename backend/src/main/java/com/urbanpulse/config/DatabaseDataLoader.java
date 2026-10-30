@@ -1,5 +1,6 @@
 package com.urbanpulse.config;
 
+import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urbanpulse.entity.Incident;
 import com.urbanpulse.entity.User;
@@ -60,6 +61,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     user.setEmail(userDTO.getEmail());
                     user.setRole(Role.valueOf(userDTO.getRole()));
                     user.setActive(userDTO.isActive());
+                    user.setCreatedAt(LocalDateTime.now()); // <--- Asignar fecha
                     userRepository.save(user);
                 }
                 log.info("Cargados {} usuarios en la base de datos.", data.getUsers().size());
@@ -75,6 +77,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     incident.setStatus(IncidentStatus.valueOf(incDTO.getStatus()));
                     incident.setLatitude(incDTO.getLatitude());
                     incident.setLongitude(incDTO.getLongitude());
+                    incident.setCreatedAt(LocalDateTime.now()); // <--- Soluciona el error de NOT NULL
                     incidentRepository.save(incident);
                 }
                 log.info("Cargadas {} incidencias iniciales en la zona de Málaga.", data.getIncidents().size());
