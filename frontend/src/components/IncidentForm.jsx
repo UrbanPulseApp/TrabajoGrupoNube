@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IncidentMap from "./IncidentMap.jsx";
-import { createIncident, uploadIncidentAttachment } from "../services/IncidentService.js";
+import { createIncident, findDuplicateIncidents, uploadIncidentAttachment } from "../services/IncidentService.js";
 import "./IncidentForm.css";
 
 const initialForm = { title: "", description: "", category: "" };
@@ -21,6 +21,28 @@ export default function IncidentForm({ onCreated }) {
   const [error, setError] = useState("");
   const [createdIncident, setCreatedIncident] = useState(null);
   const [evidence, setEvidence] = useState([]);
+  const [duplicates, setDuplicates] = useState([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+
+  useEffect(() => {
+    if (!location?.latitude || !location?.longitude) {
+      setDuplicates([]);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setCheckingDuplicates(true);
+      try {
+        const found = await findDuplicateIncidents(location.latitude, location.longitude, form.category || null, 60.0);
+        setDuplicates(found);
+      } catch {
+        setDuplicates([]);
+      } finally {
+        setCheckingDuplicates(false);
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [location?.latitude, location?.longitude, form.category]);
 
   function updateField(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -73,6 +95,7 @@ export default function IncidentForm({ onCreated }) {
       setCreatedIncident(incident);
       setForm(initialForm);
       setLocation(null);
+      setDuplicates([]);
       const uploadErrors = [];
       for (const file of evidence) {
         try { await uploadIncidentAttachment(incident.id, file); }
@@ -95,7 +118,7 @@ export default function IncidentForm({ onCreated }) {
       {createdIncident && (
         <div className="success-message" role="status">
           <span className="success-icon">✓</span>
-          <div><strong>Incidencia enviada correctamente</strong><span>Tu aviso ya está en manos del equipo municipal. Referencia: {createdIncident.id}</span></div>
+          <div><strong>Incidencia enviada correctamente</strong><span>Tu aviso ya está enriquecido con contexto urbano y en manos del equipo municipal. Referencia: {createdIncident.id}</span></div>
           <button type="button" className="dismiss-success" onClick={() => setCreatedIncident(null)} aria-label="Cerrar confirmación">×</button>
         </div>
       )}
@@ -138,6 +161,26 @@ export default function IncidentForm({ onCreated }) {
               <span className="status-dot" />
               {location ? `Ubicación seleccionada · ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Aún no has indicado una ubicación"}
             </div>
+
+            {/* Aviso inteligente de posibles duplicados */}
+            {checkingDuplicates && <div className="duplicate-check-note">Comprobando posibles incidencias registradas en la misma zona…</div>}
+            {!checkingDuplicates && duplicates.length > 0 && (
+              <div className="duplicate-warning-banner" role="status">
+                <span className="duplicate-icon">⚠️</span>
+                <div>
+                  <strong>Posible incidencia similar cercana</strong>
+                  <p>Hemos encontrado {duplicates.length === 1 ? "1 aviso activo" : `${duplicates.length} avisos activos`} a menos de 60 metros:</p>
+                  <ul className="duplicate-list">
+                    {duplicates.map((dup) => (
+                      <li key={dup.id}>
+                        <b>{dup.title}</b> ({dup.distanceMeters ? `a aprox. ${dup.distanceMeters} m` : "muy cerca"}) · Estado: {dup.status}
+                      </li>
+                    ))}
+                  </ul>
+                  <small>Si tu aviso reporta el mismo desperfecto, puedes omitirlo o continuar si deseas aportar más datos.</small>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {error && <div className="form-error" role="alert"><span aria-hidden="true">!</span>{error}</div>}

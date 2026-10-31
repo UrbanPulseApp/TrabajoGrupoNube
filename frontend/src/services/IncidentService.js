@@ -7,7 +7,6 @@ export function getIncidentAttachmentUrl(incidentId, attachmentId) {
 }
 
 export async function createIncident(incident) {
-
     const response = await apiFetch(API_URL, {
         method: "POST",
         headers: {
@@ -24,7 +23,6 @@ export async function createIncident(incident) {
 }
 
 export async function getIncident(id) {
-
     const response = await apiFetch(`${API_URL}/${id}`);
     if (!response.ok) {
         throw await responseError(response, "No se ha podido obtener la incidencia");
@@ -48,6 +46,32 @@ export async function getIncidentStatusChanges(id) {
     const response = await apiFetch(`${API_URL}/${id}/status-changes`);
     if (!response.ok) {
         throw await responseError(response, "No se pudo cargar el historial");
+    }
+    return response.json();
+}
+
+export async function getIncidentContext(id) {
+    const response = await apiFetch(`${API_URL}/${id}/context`);
+    if (!response.ok) {
+        throw await responseError(response, "No se pudo cargar el contexto urbano");
+    }
+    return response.json();
+}
+
+export async function findDuplicateIncidents(latitude, longitude, category, radiusMeters = 50) {
+    const params = new URLSearchParams({ latitude, longitude, radiusMeters });
+    if (category) params.set("category", category);
+    const response = await apiFetch(`${API_URL}/duplicates?${params.toString()}`);
+    if (!response.ok) {
+        throw await responseError(response, "No se pudieron comprobar incidencias duplicadas");
+    }
+    return response.json();
+}
+
+export async function getAnalyticsSummary() {
+    const response = await apiFetch("/api/analytics/summary");
+    if (!response.ok) {
+        throw await responseError(response, "No se pudieron cargar los indicadores analíticos");
     }
     return response.json();
 }
