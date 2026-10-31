@@ -88,6 +88,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/auth/csrf", "/api/auth/login", "/api/users/**").permitAll()
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/incidents", "/api/incidents/*",
+                        "/api/incidents/duplicates",
+                        "/api/incidents/*/context",
                         "/api/incidents/*/status-changes",
                         "/api/incidents/*/attachments", "/api/incidents/*/attachments/*").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/incidents").hasAnyRole("CITIZEN", "OPERATOR", "ADMIN")
@@ -96,6 +98,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "TECHNICIAN", "ADMIN")
                 .antMatchers(HttpMethod.PATCH, "/api/incidents/*/assignments/*").hasAnyRole("OPERATOR", "ADMIN")
+                .antMatchers("/api/analytics/**").hasAnyRole("OPERATOR", "ADMIN", "ANALYST")
                 .antMatchers("/api/admin/**").hasRole("ADMIN")
                 .antMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

@@ -1,5 +1,6 @@
 package com.urbanpulse.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.urbanpulse.enums.IncidentStatus;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,9 @@ public class IncidentResponse {
     private IncidentStatus status;
     private LocalDateTime createdAt;
     private LocationResponse location;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double distanceMeters;
 
     public IncidentResponse() {
     }
@@ -72,5 +76,13 @@ public class IncidentResponse {
 
     public void setLocation(LocationResponse location) {
         this.location = location;
+    }
+
+    public Double getDistanceMeters() {
+        return distanceMeters;
+    }
+
+    public void setDistanceMeters(Double distanceMeters) {
+        this.distanceMeters = distanceMeters;
     }
 }
