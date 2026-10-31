@@ -1,6 +1,8 @@
 package com.urbanpulse.exception;
 
 import com.urbanpulse.dto.ApiError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +24,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // Manejo centralizado de excepciones (ADR-005). Todas las respuestas de error
-// respetan el contrato unificado ApiError y nunca exponen trazas internas.
+// respetan el contrato unificado ApiError y nunca exponen trazas internas al cliente.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex,
@@ -50,6 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataConflict(DataIntegrityViolationException ex,
                                                         HttpServletRequest request) {
+        log.warn("Conflicto de integridad de datos en {}: {}", request.getRequestURI(), ex.getMessage());
         return build(HttpStatus.CONFLICT, "DATA_CONFLICT", "Data conflict",
                 "La operación entra en conflicto con datos existentes.", request, null);
     }
@@ -107,7 +112,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex,
                                                   HttpServletRequest request) {
-        // No se expone la excepción interna al cliente.
+        log.error("Excepción no controlada en el servidor [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage(), ex);
+        // No se expone la excepción interna al cliente por seguridad
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
                 "Internal server error", "An unexpected error occurred.",
                 request, null);
