@@ -28,14 +28,14 @@ public class NotificationController {
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationResponse>> getUserNotifications(
-            @PathVariable Long userId,
+            @PathVariable UUID userId,
             @RequestParam(defaultValue = "false") boolean unreadOnly) {
         List<NotificationResponse> notifications = notificationService.getUserNotifications(userId, unreadOnly);
         return ResponseEntity.ok(notifications);
     }
 
     @GetMapping("/user/{userId}/unread-count")
-    public ResponseEntity<Long> getUnreadCount(@PathVariable Long userId) {
+    public ResponseEntity<Long> getUnreadCount(@PathVariable UUID userId) {
         long count = notificationService.getUnreadCount(userId);
         return ResponseEntity.ok(count);
     }

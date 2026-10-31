@@ -55,7 +55,7 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getUserNotifications(Long userId, boolean unreadOnly) {
+    public List<NotificationResponse> getUserNotifications(UUID userId, boolean unreadOnly) {
         List<Notification> notifications = unreadOnly
                 ? notificationRepository.findByRecipientIdAndReadFalseOrderByCreatedAtDesc(userId)
                 : notificationRepository.findByRecipientIdOrderByCreatedAtDesc(userId);
@@ -66,7 +66,7 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public long getUnreadCount(Long userId) {
+    public long getUnreadCount(UUID userId) {
         return notificationRepository.countByRecipientIdAndReadFalse(userId);
     }
 
