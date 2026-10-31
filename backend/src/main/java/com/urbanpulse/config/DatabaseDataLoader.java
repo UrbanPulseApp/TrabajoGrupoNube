@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +31,16 @@ public class DatabaseDataLoader implements CommandLineRunner {
     private final IncidentRepository incidentRepository;
     private final UrbanAssetRepository urbanAssetRepository;
     private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public DatabaseDataLoader(UserRepository userRepository,
                               IncidentRepository incidentRepository,
-                              UrbanAssetRepository urbanAssetRepository) {
+                              UrbanAssetRepository urbanAssetRepository,
+                              PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.incidentRepository = incidentRepository;
         this.urbanAssetRepository = urbanAssetRepository;
+        this.passwordEncoder = passwordEncoder;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -71,6 +75,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     user.setRole(Role.valueOf(userDTO.getRole()));
                     user.setActive(userDTO.isActive());
                     user.setCreatedAt(LocalDateTime.now());
+                    user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
                     userRepository.save(user);
                 }
                 log.info("Cargados {} usuarios en la base de datos.", data.getUsers().size());
@@ -128,6 +133,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
         private String name;
         private String email;
         private String role;
+        private String password;
         private boolean active = true;
 
         public String getName() { return name; }
@@ -138,6 +144,8 @@ public class DatabaseDataLoader implements CommandLineRunner {
         public void setRole(String role) { this.role = role; }
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 
     private static class IncidentSeedDTO {
