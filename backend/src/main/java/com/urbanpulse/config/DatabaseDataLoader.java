@@ -1,22 +1,26 @@
 package com.urbanpulse.config;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urbanpulse.entity.Incident;
+import com.urbanpulse.entity.UrbanAsset;
 import com.urbanpulse.entity.User;
 import com.urbanpulse.enums.IncidentStatus;
 import com.urbanpulse.enums.Role;
 import com.urbanpulse.repository.IncidentRepository;
+import com.urbanpulse.repository.UrbanAssetRepository;
 import com.urbanpulse.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.util.List;
 
 @Component
 public class DatabaseDataLoader implements CommandLineRunner {
@@ -25,17 +29,26 @@ public class DatabaseDataLoader implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final IncidentRepository incidentRepository;
+    private final UrbanAssetRepository urbanAssetRepository;
     private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public DatabaseDataLoader(UserRepository userRepository, IncidentRepository incidentRepository) {
+    public DatabaseDataLoader(UserRepository userRepository,
+                              IncidentRepository incidentRepository,
+                              UrbanAssetRepository urbanAssetRepository,
+                              PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.incidentRepository = incidentRepository;
+        this.urbanAssetRepository = urbanAssetRepository;
+        this.passwordEncoder = passwordEncoder;
         this.objectMapper = new ObjectMapper();
     }
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        loadUrbanAssetsIfEmpty();
+
         // Evita duplicar datos si la base de datos ya contiene registros
         if (userRepository.count() > 0 || incidentRepository.count() > 0) {
             log.info("Base de datos ya inicializada. Se omite la carga del dataset JSON.");
@@ -61,7 +74,8 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     user.setEmail(userDTO.getEmail());
                     user.setRole(Role.valueOf(userDTO.getRole()));
                     user.setActive(userDTO.isActive());
-                    user.setCreatedAt(LocalDateTime.now()); // <--- Asignar fecha
+                    user.setCreatedAt(LocalDateTime.now());
+                    user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
                     userRepository.save(user);
                 }
                 log.info("Cargados {} usuarios en la base de datos.", data.getUsers().size());
@@ -77,7 +91,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     incident.setStatus(IncidentStatus.valueOf(incDTO.getStatus()));
                     incident.setLatitude(incDTO.getLatitude());
                     incident.setLongitude(incDTO.getLongitude());
-                    incident.setCreatedAt(LocalDateTime.now()); // <--- Soluciona el error de NOT NULL
+                    incident.setCreatedAt(LocalDateTime.now());
                     incidentRepository.save(incident);
                 }
                 log.info("Cargadas {} incidencias iniciales en la zona de Málaga.", data.getIncidents().size());
@@ -89,7 +103,22 @@ public class DatabaseDataLoader implements CommandLineRunner {
         }
     }
 
-    // Estruturas DTO para deserializar el archivo JSON
+    private void loadUrbanAssetsIfEmpty() {
+        if (urbanAssetRepository.count() == 0) {
+            List<UrbanAsset> defaultAssets = Arrays.asList(
+                    new UrbanAsset("SEM-ALAMEDA-01", "SEMAFORO", "AYTO_MALAGA", 36.7185, -4.4202, "Cruce peatonal Alameda Principal con Calle Larios"),
+                    new UrbanAsset("PAR-EMT-102", "PARADA_AUTOBUS", "EMT_MALAGA", 36.7180, -4.4210, "Líneas 1, 3, 11 - Alameda Principal"),
+                    new UrbanAsset("FAR-ALAMEDA-45", "FAROLA", "ALUMBRADO_MALAGA", 36.7188, -4.4198, "Luminaria LED 150W báculo histórico"),
+                    new UrbanAsset("SEM-TEATINOS-03", "SEMAFORO", "AYTO_MALAGA", 36.7162, -4.4700, "Cruce Bulevar Louis Pasteur con Calle Jenofonte"),
+                    new UrbanAsset("PAR-METRO-04", "ESTACION_METRO", "METRO_MALAGA", 36.7165, -4.4710, "Estación Universidad - Teatinos"),
+                    new UrbanAsset("SEM-VELAZQUEZ-12", "SEMAFORO", "AYTO_MALAGA", 36.7030, -4.4370, "Avenida de Velázquez cruce Calle Alaska")
+            );
+            urbanAssetRepository.saveAll(defaultAssets);
+            log.info("Cargados {} activos urbanos de referencia en Málaga.", defaultAssets.size());
+        }
+    }
+
+    // Estructuras DTO para deserializar el archivo JSON
     private static class InitialDataDTO {
         private List<UserSeedDTO> users;
         private List<IncidentSeedDTO> incidents;
@@ -104,6 +133,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
         private String name;
         private String email;
         private String role;
+        private String password;
         private boolean active = true;
 
         public String getName() { return name; }
@@ -114,6 +144,8 @@ public class DatabaseDataLoader implements CommandLineRunner {
         public void setRole(String role) { this.role = role; }
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 
     private static class IncidentSeedDTO {

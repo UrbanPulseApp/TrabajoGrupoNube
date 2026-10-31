@@ -3,16 +3,17 @@ package com.urbanpulse.dto;
 import com.urbanpulse.enums.Role;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class UserResponse {
-    private Long id;
+    private UUID id;
     private String name;
     private String email;
     private Role role;
     private LocalDateTime createdAt;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }

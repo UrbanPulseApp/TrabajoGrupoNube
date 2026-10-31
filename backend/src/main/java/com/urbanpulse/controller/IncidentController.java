@@ -4,6 +4,7 @@ import com.urbanpulse.dto.CreateIncidentRequest;
 import com.urbanpulse.dto.IncidentResponse;
 import com.urbanpulse.dto.StatusChangeResponse;
 import com.urbanpulse.dto.UpdateIncidentStatusRequest;
+import com.urbanpulse.dto.UrbanContextResponse;
 import com.urbanpulse.enums.IncidentStatus;
 import com.urbanpulse.service.IncidentService;
 import javax.validation.Valid;
@@ -12,9 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/incidents")
@@ -53,6 +54,15 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.search(status, category, query, from, to, page, size, sort));
     }
 
+    @GetMapping("/duplicates")
+    public ResponseEntity<List<IncidentResponse>> findDuplicates(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "50.0") Double radiusMeters) {
+        return ResponseEntity.ok(incidentService.findDuplicates(latitude, longitude, category, radiusMeters));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<IncidentResponse> getIncident(
             @PathVariable UUID id) {
@@ -61,6 +71,12 @@ public class IncidentController {
                 incidentService.getById(id);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/context")
+    public ResponseEntity<UrbanContextResponse> getIncidentContext(
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(incidentService.getUrbanContext(id));
     }
 
     @PatchMapping("/{id}")

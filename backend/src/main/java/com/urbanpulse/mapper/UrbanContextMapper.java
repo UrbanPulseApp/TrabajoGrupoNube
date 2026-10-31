@@ -1,10 +1,15 @@
 package com.urbanpulse.mapper;
 
+import com.urbanpulse.dto.ExternalObservationResponse;
+import com.urbanpulse.dto.UrbanAssetResponse;
+import com.urbanpulse.dto.UrbanContextResponse;
 import com.urbanpulse.entity.UrbanContext;
 import com.urbanpulse.external.context.ExternalObservation;
+import com.urbanpulse.external.location.LocationContext;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,6 +25,12 @@ public class UrbanContextMapper {
             entity.setWeatherSummary(dto.getWeatherSummary());
             entity.setTrafficStatus(dto.getTrafficStatus());
             entity.setCapturedAt(dto.getCapturedAt() != null ? dto.getCapturedAt() : LocalDateTime.now());
+
+            if (dto.getLocationContext() != null) {
+                entity.setDistrict(dto.getLocationContext().getDistrict());
+                entity.setNeighborhood(dto.getLocationContext().getNeighborhood());
+                entity.setAddress(dto.getLocationContext().getAddress());
+            }
 
             if (dto.getObservations() != null) {
                 List<com.urbanpulse.entity.ExternalObservation> entityObsList = dto.getObservations().stream()
@@ -47,6 +58,12 @@ public class UrbanContextMapper {
         dto.setTrafficStatus(entity.getTrafficStatus());
         dto.setCapturedAt(entity.getCapturedAt());
 
+        LocationContext locationContext = new LocationContext();
+        locationContext.setDistrict(entity.getDistrict());
+        locationContext.setNeighborhood(entity.getNeighborhood());
+        locationContext.setAddress(entity.getAddress());
+        dto.setLocationContext(locationContext);
+
         if (entity.getObservations() != null) {
             List<ExternalObservation> dtoObsList = entity.getObservations().stream()
                     .map(this::toObservationDto)
@@ -55,6 +72,41 @@ public class UrbanContextMapper {
         }
 
         return dto;
+    }
+
+    public UrbanContextResponse toResponseDto(UrbanContext entity, List<UrbanAssetResponse> nearbyAssets) {
+        if (entity == null) {
+            return null;
+        }
+
+        UrbanContextResponse response = new UrbanContextResponse();
+        response.setIncidentId(entity.getIncidentId());
+        response.setDistrict(entity.getDistrict());
+        response.setNeighborhood(entity.getNeighborhood());
+        response.setAddress(entity.getAddress());
+        response.setWeatherSummary(entity.getWeatherSummary());
+        response.setTrafficStatus(entity.getTrafficStatus());
+        response.setCapturedAt(entity.getCapturedAt());
+
+        if (entity.getObservations() != null) {
+            List<ExternalObservationResponse> obsResponses = entity.getObservations().stream()
+                    .map(obs -> new ExternalObservationResponse(
+                            obs.getSource(),
+                            obs.getMetricName(),
+                            obs.getUnit(),
+                            obs.getValue(),
+                            obs.getQualityScore(),
+                            obs.getObservationTimestamp()
+                    ))
+                    .collect(Collectors.toList());
+            response.setObservations(obsResponses);
+        } else {
+            response.setObservations(new ArrayList<>());
+        }
+
+        response.setNearbyAssets(nearbyAssets != null ? nearbyAssets : new ArrayList<>());
+
+        return response;
     }
 
     private com.urbanpulse.entity.ExternalObservation toObservationEntity(ExternalObservation dto) {
