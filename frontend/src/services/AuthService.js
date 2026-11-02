@@ -1,5 +1,9 @@
 import { apiFetch, responseError } from "./ApiClient.js";
 
+export async function getCsrfToken() {
+  await apiFetch("/api/auth/csrf");
+}
+
 export async function getCurrentUser() {
   const response = await apiFetch("/api/auth/me");
   if (response.status === 401) return null;
@@ -8,6 +12,9 @@ export async function getCurrentUser() {
 }
 
 export async function login(credentials) {
+  // Solicita un token CSRF nuevo antes de enviar el POST de login
+  await getCsrfToken();
+
   const response = await apiFetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,6 +25,8 @@ export async function login(credentials) {
 }
 
 export async function registerCitizen(account) {
+  await getCsrfToken();
+
   const response = await apiFetch("/api/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -28,6 +37,7 @@ export async function registerCitizen(account) {
 }
 
 export async function logout() {
+  await getCsrfToken();
   const response = await apiFetch("/api/auth/logout", { method: "POST" });
   if (!response.ok && response.status !== 204) throw await responseError(response, "No se pudo cerrar sesión");
 }

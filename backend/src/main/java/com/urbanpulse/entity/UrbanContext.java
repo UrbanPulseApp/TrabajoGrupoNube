@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -29,8 +30,22 @@ public class UrbanContext {
     @Id
     private UUID incidentId;
 
+    @Column
+    private String district;
+
+    @Column
+    private String neighborhood;
+
+    @Column
+    private String address;
+
+    @Column
     private String weatherSummary;
+
+    @Column
     private String trafficStatus;
+
+    @Column(nullable = false)
     private LocalDateTime capturedAt;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -38,13 +53,36 @@ public class UrbanContext {
     @Builder.Default
     private List<ExternalObservation> observations = new ArrayList<>();
 
-
     public UUID getIncidentId() {
         return incidentId;
     }
 
     public void setIncidentId(UUID incidentId) {
         this.incidentId = incidentId;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getWeatherSummary() {

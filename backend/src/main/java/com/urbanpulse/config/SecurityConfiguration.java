@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -34,15 +33,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper) {
+    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.objectMapper = objectMapper;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Bean
@@ -69,7 +65,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userService).passwordEncoder(passwordEncoder);
     }
 
     @Override
@@ -78,16 +74,22 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         csrfRepository.setHeaderName("X-XSRF-TOKEN");
 
         http
-            .csrf().csrfTokenRepository(csrfRepository)
-            .and()
-            .securityContext().securityContextRepository(securityContextRepository())
-            .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            .and()
-            .authorizeRequests()
-                .antMatchers("/api/auth/csrf", "/api/auth/login", "/api/users").permitAll()
+                .csrf()
+                .csrfTokenRepository(csrfRepository)
+                .ignoringAntMatchers("/api/auth/login", "/api/auth/logout")
+                .and()
+                .securityContext()
+                .securityContextRepository(securityContextRepository())
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .and()
+                .authorizeRequests()
+                .antMatchers("/api/auth/csrf", "/api/auth/login", "/api/users/**").permitAll()
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/incidents", "/api/incidents/*",
+                        "/api/incidents/duplicates",
+                        "/api/incidents/*/context",
                         "/api/incidents/*/status-changes",
                         "/api/incidents/*/attachments", "/api/incidents/*/attachments/*").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/incidents").hasAnyRole("CITIZEN", "OPERATOR", "ADMIN")
@@ -96,16 +98,20 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "TECHNICIAN", "ADMIN")
                 .antMatchers(HttpMethod.PATCH, "/api/incidents/*/assignments/*").hasAnyRole("OPERATOR", "ADMIN")
+                .antMatchers("/api/analytics/**").hasAnyRole("OPERATOR", "ADMIN", "ANALYST")
                 .antMatchers("/api/admin/**").hasRole("ADMIN")
                 .antMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
-            .and()
-            .exceptionHandling()
+                .and()
+                .exceptionHandling()
                 .authenticationEntryPoint(apiAuthenticationEntryPoint())
                 .accessDeniedHandler(apiAccessDeniedHandler())
-            .and()
-            .logout()
+                .and()
+                .logout()
                 .logoutUrl("/api/auth/logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID", "XSRF-TOKEN")
                 .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpServletResponse.SC_NO_CONTENT));
     }
 

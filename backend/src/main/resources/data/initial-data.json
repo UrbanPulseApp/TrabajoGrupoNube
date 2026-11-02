@@ -3,30 +3,35 @@
     {
       "name": "Juan Pérez García",
       "email": "juan.perez@ciudadano.es",
+      "password": "contrasenasegura123",
       "role": "CITIZEN",
       "active": true
     },
     {
       "name": "María López Sánchez",
       "email": "maria.lopez@ciudadano.es",
+        "password": "contrasenasegura123",
       "role": "CITIZEN",
       "active": true
     },
     {
       "name": "Carlos Rodríguez Martín",
       "email": "carlos.rodriguez@urbanpulse.es",
+        "password": "contrasenasegura123",
       "role": "OPERATOR",
       "active": true
     },
     {
       "name": "Laura Gómez Ruíz",
       "email": "laura.gomez@tecnicos.urbanpulse.es",
+        "password": "contrasenasegura123",
       "role": "TECHNICIAN",
       "active": true
     },
     {
       "name": "Administrador General",
       "email": "admin@urbanpulse.es",
+      "password": "contrasenasegura123",
       "role": "ADMIN",
       "active": true
     }

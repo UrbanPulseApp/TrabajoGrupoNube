@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getIncidentAttachmentUrl, getIncidentAttachments, getIncidentStatusChanges, getIncidents } from "../services/IncidentService.js";
+import { getIncidentAttachmentUrl, getIncidentAttachments, getIncidentContext, getIncidentStatusChanges, getIncidents } from "../services/IncidentService.js";
 import IncidentOperations from "./IncidentOperations.jsx";
 import "./IncidentBoard.css";
 
@@ -29,6 +29,8 @@ export default function IncidentBoard({ refreshKey = 0, currentUser, onChanged }
   const [historyError, setHistoryError] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [attachmentError, setAttachmentError] = useState("");
+  const [contextData, setContextData] = useState(null);
+  const [contextLoading, setContextLoading] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setFilters((current) => ({ ...current, q: query.trim() })), 250);
@@ -60,13 +62,21 @@ export default function IncidentBoard({ refreshKey = 0, currentUser, onChanged }
     setHistoryError("");
     setAttachments([]);
     setAttachmentError("");
-    const [historyResult, attachmentResult] = await Promise.allSettled([
-      getIncidentStatusChanges(id), getIncidentAttachments(id),
+    setContextData(null);
+    setContextLoading(true);
+
+    const [historyResult, attachmentResult, contextResult] = await Promise.allSettled([
+      getIncidentStatusChanges(id),
+      getIncidentAttachments(id),
+      getIncidentContext(id)
     ]);
+
+    setContextLoading(false);
     if (historyResult.status === "fulfilled") setHistory(historyResult.value);
     else setHistoryError(historyResult.reason.message);
     if (attachmentResult.status === "fulfilled") setAttachments(attachmentResult.value);
     else setAttachmentError(attachmentResult.reason.message);
+    if (contextResult.status === "fulfilled") setContextData(contextResult.value);
   }
 
   return (
@@ -98,23 +108,84 @@ export default function IncidentBoard({ refreshKey = 0, currentUser, onChanged }
                 <span className={`status-pill status-${incident.status?.toLowerCase()}`}>{statusLabels[incident.status] || incident.status}</span>
                 <div className="incident-row-title"><h3>{incident.title}</h3><span>{formatDate(incident.createdAt)}</span></div>
                 <p>{incident.description}</p>
-                <div className="incident-row-meta"><span>{categories.find(([value]) => value === incident.category)?.[1] || incident.category || "Sin categoría"}</span><span>⌖ {incident.location?.latitude?.toFixed(4)}, {incident.location?.longitude?.toFixed(4)}</span></div>
+                <div className="incident-row-meta">
+                  <span>{categories.find(([value]) => value === incident.category)?.[1] || incident.category || "Sin categoría"}</span>
+                  <span>⌖ {incident.location?.latitude?.toFixed(4)}, {incident.location?.longitude?.toFixed(4)}</span>
+                </div>
               </div>
-              <button className="history-button" type="button" onClick={() => toggleHistory(incident.id)}>{historyId === incident.id ? "Ocultar detalles" : "Historial y evidencias"}<span aria-hidden="true">{historyId === incident.id ? "⌃" : "⌄"}</span></button>
+              <button className="history-button" type="button" onClick={() => toggleHistory(incident.id)}>
+                {historyId === incident.id ? "Ocultar detalles" : "Detalles, contexto y evidencias"}
+                <span aria-hidden="true">{historyId === incident.id ? "⌃" : "⌄"}</span>
+              </button>
               {currentUser && ["OPERATOR", "TECHNICIAN", "ADMIN"].includes(currentUser.role) && <IncidentOperations incident={incident} role={currentUser.role} onChanged={onChanged} />}
               {historyId === incident.id && (
                 <div className="incident-history">
-                  <strong>Historial de estado</strong>
+                  {/* Contexto Urbano Enriquecido (RF21, RF22, RF23) */}
+                  <div className="urban-context-panel">
+                    <strong>Contexto urbano y territorio (Málaga)</strong>
+                    {contextLoading && <p className="context-loading">Consultando datos del contexto urbano…</p>}
+                    {!contextLoading && contextData && (
+                      <div className="context-details-grid">
+                        <div className="context-badge">
+                          <span className="badge-title">Distrito & Barrio</span>
+                          <span>{contextData.district || "Distrito Málaga"} · {contextData.neighborhood || "Zona urbana"}</span>
+                          {contextData.address && <small>{contextData.address}</small>}
+                        </div>
+                        <div className="context-badge">
+                          <span className="badge-title">Clima & Tráfico</span>
+                          <span>☁ {contextData.weatherSummary || "Clima moderado"}</span>
+                          <span>🚦 {contextData.trafficStatus || "Tráfico habitual"}</span>
+                        </div>
+                        {contextData.nearbyAssets && contextData.nearbyAssets.length > 0 && (
+                          <div className="context-badge assets-badge">
+                            <span className="badge-title">Activos físicos cercanos (&lt;100m)</span>
+                            <ul className="assets-list">
+                              {contextData.nearbyAssets.map((asset) => (
+                                <li key={asset.id}>
+                                  <b>{asset.type}</b>: {asset.metadata || asset.id} ({asset.distanceMeters} m)
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <strong className="attachment-heading">Historial de estado</strong>
                   {historyError ? <p role="alert">{historyError}</p> : history.length === 0 ? <p>No hay cambios de estado registrados todavía.</p> : history.map((change) => (
-                    <div className="history-event" key={change.id}><span className="history-mark" /><div><b>{statusLabels[change.newStatus] || change.newStatus}</b><span>{change.previousStatus ? `${statusLabels[change.previousStatus] || change.previousStatus} → ` : ""}{formatDate(change.changedAt)}</span>{change.reason && <small>{change.reason}</small>}</div></div>
+                    <div className="history-event" key={change.id}>
+                      <span className="history-mark" />
+                      <div>
+                        <b>{statusLabels[change.newStatus] || change.newStatus}</b>
+                        <span>{change.previousStatus ? `${statusLabels[change.previousStatus] || change.previousStatus} → ` : ""}{formatDate(change.changedAt)}</span>
+                        {change.reason && <small>{change.reason}</small>}
+                      </div>
+                    </div>
                   ))}
+
                   <strong className="attachment-heading">Evidencias</strong>
-                  {attachmentError ? <p role="alert">{attachmentError}</p> : attachments.length === 0 ? <p>Esta incidencia no tiene archivos adjuntos.</p> : <ul className="attachment-links">{attachments.map((attachment) => <li key={attachment.id}><a href={getIncidentAttachmentUrl(incident.id, attachment.id)} target="_blank" rel="noreferrer">↗ {attachment.filename}</a><span>{Math.max(1, Math.round(attachment.size / 1024))} KB</span></li>)}</ul>}
+                  {attachmentError ? <p role="alert">{attachmentError}</p> : attachments.length === 0 ? <p>Esta incidencia no tiene archivos adjuntos.</p> : (
+                    <ul className="attachment-links">
+                      {attachments.map((attachment) => (
+                        <li key={attachment.id}>
+                          <a href={getIncidentAttachmentUrl(incident.id, attachment.id)} target="_blank" rel="noreferrer">↗ {attachment.filename}</a>
+                          <span>{Math.max(1, Math.round(attachment.size / 1024))} KB</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </article>
           ))}
-          <div className="board-pagination"><span>Página {page + 1} de {Math.max(result.totalPages || 0, 1)}</span><div><button type="button" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>Anterior</button><button type="button" disabled={page + 1 >= result.totalPages} onClick={() => setPage((current) => current + 1)}>Siguiente</button></div></div>
+          <div className="board-pagination">
+            <span>Página {page + 1} de {Math.max(result.totalPages || 0, 1)}</span>
+            <div>
+              <button type="button" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>Anterior</button>
+              <button type="button" disabled={page + 1 >= result.totalPages} onClick={() => setPage((current) => current + 1)}>Siguiente</button>
+            </div>
+          </div>
         </div>
       )}
     </section>
