@@ -23,47 +23,46 @@ Los cambios incompatibles en el contrato se introducen mediante versionado expl�
 * Se cambia de versión cuando el contrato introduce una incompatibilidad **observable para el cliente** (renombrar/quitar campos, cambiar tipos, cambiar reglas de validación o significados).
 * Los cambios compatibles (añadir un campo opcional, añadir un endpoint nuevo) no requieren nueva versión.
 * Cada versión tiene un ciclo de retirada definido y documentado.
-
-> Nota: el prefijo `/api/v1` es el objetivo del contrato. En los ejemplos se muestra sin `v1` por brevedad; en la implementación debe fijarse un único criterio, siendo `/api/v1` el recomendado.
+* **Todos los ejemplos de este documento usan el prefijo `/api/v1`.** El backend deberá exponer la API bajo este prefijo.
 
 ## 2. Rutas Principales (Endpoints)
 
-### 2.1 Recurso: Incidencias (/api/incidents)
+### 2.1 Recurso: Incidencias (/api/v1/incidents)
 
-* **POST /api/incidents**: Registra un nuevo reporte. Devuelve `201 Created` con cabecera `Location` apuntando al recurso creado.
-* **GET /api/incidents**: Obtiene el catálogo de incidencias. Los filtros, la ordenación y la paginación se aplican mediante parámetros de consulta (query parameters), por ejemplo: `?status=VALIDATED&sort=-priority`.
-* **GET /api/incidents/{id}**: Consulta los detalles de una incidencia específica identificada por su parámetro de ruta (path parameter).
-* **PUT /api/incidents/{id}**: Reemplaza **completamente** la incidencia (el cuerpo debe ser la representación completa).
-* **PATCH /api/incidents/{id}**: Modifica **parcialmente** un recurso, enviando en el cuerpo (body) únicamente los campos que deben cambiar (ej. asignar un técnico).
-* **DELETE /api/incidents/{id}**: Elimina la incidencia. Devuelve `204 No Content`.
+* **POST /api/v1/incidents**: Registra un nuevo reporte. Devuelve `201 Created` con cabecera `Location` apuntando al recurso creado.
+* **GET /api/v1/incidents**: Obtiene el catálogo de incidencias. Los filtros, la ordenación y la paginación se aplican mediante parámetros de consulta (query parameters), por ejemplo: `?status=VALIDATED&sort=-priority`.
+* **GET /api/v1/incidents/{id}**: Consulta los detalles de una incidencia específica identificada por su parámetro de ruta (path parameter).
+* **PUT /api/v1/incidents/{id}**: Reemplaza **completamente** la incidencia (el cuerpo debe ser la representación completa).
+* **PATCH /api/v1/incidents/{id}**: Modifica **parcialmente** un recurso, enviando en el cuerpo (body) únicamente los campos que deben cambiar (ej. asignar un técnico).
+* **DELETE /api/v1/incidents/{id}**: Elimina la incidencia. Devuelve `204 No Content`.
 
-### 2.2 Asignaciones de una incidencia (/api/incidents/{id}/assignments)
+### 2.2 Asignaciones de una incidencia (/api/v1/incidents/{id}/assignments)
 
 La asignación es un subrecurso cuya existencia depende de la incidencia (jerarquía con dependencia):
 
-* **POST /api/incidents/{id}/assignments**: Asigna la incidencia a un destino operativo. Devuelve `201 Created` con `Location`. Operación **idempotente**: no crea duplicados; si ya existe una asignación activa para el mismo destino, devuelve `409 Conflict` (o la existente).
-* **GET /api/incidents/{id}/assignments**: Lista las asignaciones de la incidencia (admite paginación).
+* **POST /api/v1/incidents/{id}/assignments**: Asigna la incidencia a un destino operativo. Devuelve `201 Created` con `Location`. Operación **idempotente**: no crea duplicados; si ya existe una asignación activa para el mismo destino, devuelve `409 Conflict` (o la existente).
+* **GET /api/v1/incidents/{id}/assignments**: Lista las asignaciones de la incidencia (admite paginación).
 
 ### 2.3 Acciones de dominio
 
 Las operaciones de negocio que no encajan en CRUD se modelan como **acciones sobre el recurso**, no como un `PATCH` que cambia un estado a ciegas:
 
-* **POST /api/incidents/{id}/cancellation**: Cancela una incidencia. El cuerpo puede incluir el motivo (`{ "reason": "duplicate" }`).
-* **POST /api/incidents/{id}/confirmation**: Confirma una incidencia pendiente de validación.
+* **POST /api/v1/incidents/{id}/cancellation**: Cancela una incidencia. El cuerpo puede incluir el motivo (`{ "reason": "duplicate" }`).
+* **POST /api/v1/incidents/{id}/confirmation**: Confirma una incidencia pendiente de validación.
 
 Una acción de dominio representa una **intención propia** con reglas y efectos secundarios, no una modificación arbitraria de campos.
 
-### 2.4 Recurso: Usuarios (/api/users)
+### 2.4 Recurso: Usuarios (/api/v1/users)
 
-* **POST /api/users**: Crea un nuevo usuario en la plataforma.
-* **GET /api/users**: Lista usuarios (paginado).
-* **GET /api/users/{id}**: Recupera la información detallada de un usuario.
+* **POST /api/v1/users**: Crea un nuevo usuario en la plataforma.
+* **GET /api/v1/users**: Lista usuarios (paginado).
+* **GET /api/v1/users/{id}**: Recupera la información detallada de un usuario.
 
 La representación de creación (con `password`) es **distinta** de la de respuesta; la contraseña **nunca** aparece en ninguna respuesta.
 
-### 2.5 Recurso: Contexto urbano (/api/incidents/{id}/context)
+### 2.5 Recurso: Contexto urbano (/api/v1/incidents/{id}/context)
 
-* **GET /api/incidents/{id}/context**: Recupera el contexto urbano (localización, meteorología, tráfico y observaciones externas) asociado a la incidencia.
+* **GET /api/v1/incidents/{id}/context**: Recupera el contexto urbano (localización, meteorología, tráfico y observaciones externas) asociado a la incidencia.
 
 ## 3. Métodos HTTP y su semántica
 
@@ -116,7 +115,7 @@ Todos los errores devueltos por la API de UrbanPulse seguirán estrictamente est
   "status": 422,
   "code": "VALIDATION_ERROR",
   "detail": "Two fields contain invalid values.",
-  "instance": "/api/incidents",
+  "instance": "/api/v1/incidents",
   "requestId": "req_8Xy3Z",
   "errors": [
     {
@@ -142,7 +141,7 @@ Ejemplo de conflicto de recurso existente:
   "status": 409,
   "code": "ASSIGNMENT_ALREADY_EXISTS",
   "detail": "The incident already has an active assignment for this destination.",
-  "instance": "/api/incidents/INC-1024/assignments",
+  "instance": "/api/v1/incidents/INC-1024/assignments",
   "requestId": "req_8Xy3Z"
 }
 ```
@@ -159,25 +158,40 @@ X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
 Content-Type: application/json
 ```
 
-## 7. Cabeceras HTTP relevantes
+## 7. CSRF y autenticación
+
+La autenticación de la API se basa en `Authorization: Bearer <token>` (JWT), con peticiones
+**stateless**. Al no usar cookies de sesión, el navegador no adjunta credenciales
+automáticamente ante sitios de terceros y, por tanto, **CSRF no aplica**.
+
+* **Por qué no aplica:** el ataque CSRF explota el envío automático de cookies de sesión por parte
+  del navegador. Con `Bearer <token>` el cliente decide explícitamente qué token envía en cada
+  petición, de modo que un sitio malicioso no puede forjar una petición autenticada.
+* **Si en el futuro** se introduce autenticación basada en cookies de sesión, será **obligatorio**
+  añadir protección CSRF (token) en todos los métodos que modifican estado (`POST`, `PUT`,
+  `PATCH`, `DELETE`).
+* **Requisito del contrato:** la API solo acepta credenciales vía `Authorization`; las cookies no
+  se usan como mecanismo de autenticación.
+
+## 8. Cabeceras HTTP relevantes
 
 | Cabecera | Uso | Ejemplo |
 |---|---|---|
 | `Content-Type` | Formato del cuerpo enviado | `application/json` |
 | `Accept` | Formato esperado por el cliente | `application/json` |
 | `Authorization` | Credenciales o token | `Bearer <token>` |
-| `Location` | URL del recurso recién creado | `/api/incidents/INC-1024` |
+| `Location` | URL del recurso recién creado | `/api/v1/incidents/INC-1024` |
 | `X-Request-ID` | Trazabilidad de la petición | `550e8400-...` |
 
-## 8. Filtros, ordenación y paginación
+## 9. Filtros, ordenación y paginación
 
-### 8.1 Filtros y búsqueda
-* Filtros como query parameters combinables: `GET /api/incidents?status=VALIDATED&priority=HIGH&category=TRAFFIC_LIGHT`.
+### 9.1 Filtros y búsqueda
+* Filtros como query parameters combinables: `GET /api/v1/incidents?status=VALIDATED&priority=HIGH&category=TRAFFIC_LIGHT`.
 * No se crean endpoints independientes por filtro.
-* Ordenación: `?sort=createdAt,-priority` (prefijo `-` indica descendente). Alternativa: `?sortBy=createdAt&order=desc`.
-* Búsqueda textual sobre colecciones conocidas: `GET /api/incidents?q=semaforo`; los filtros estructurados se mantienen como query parameters.
+* Ordenación: `?sortBy=createdAt&order=desc` (desc indica orden descendiente).
+* Búsqueda textual sobre colecciones conocidas: `GET /api/v1/incidents?q=semaforo`; los filtros estructurados se mantienen como query parameters.
 
-### 8.2 Paginación
+### 9.2 Paginación
 Toda colección devuelve una envoltura con metadatos de navegación, no un array plano:
 
 ```json
@@ -197,11 +211,11 @@ Toda colección devuelve una envoltura con metadatos de navegación, no un array
 * Se admite **paginación por página** (`?page=2&pageSize=20`) y, para grandes volúmenes o colecciones cambiantes, **paginación por cursor** (`?pageSize=20&pageToken=<opaco>`), tratando el token como opaco.
 * Nunca se devuelven colecciones completas sin límite.
 
-## 9. Estructura de Respuestas (DTOs)
+## 10. Estructura de Respuestas (DTOs)
 
 Para evitar exponer el modelo de base de datos directamente, las respuestas utilizarán DTOs (Data Transfer Objects) en formato JSON.
 
-Ejemplo de respuesta para una Incidencia (`GET /api/incidents/{id}`):
+Ejemplo de respuesta para una Incidencia (`GET /api/v1/incidents/{id}`):
 
 ```json
 {
@@ -221,7 +235,7 @@ Ejemplo de respuesta para una Incidencia (`GET /api/incidents/{id}`):
 }
 ```
 
-Ejemplo de respuesta para una Asignación (`GET /api/incidents/{id}/assignments`):
+Ejemplo de respuesta para una Asignación (`GET /api/v1/incidents/{id}/assignments`):
 
 ```json
 {
@@ -237,7 +251,7 @@ Ejemplo de respuesta para una Asignación (`GET /api/incidents/{id}/assignments`
 }
 ```
 
-## 10. Convenciones de datos
+## 11. Convenciones de datos
 
 * **Nombres consistentes:** `camelCase` en JSON, sin abreviaturas oscuras, mismo término para el mismo concepto (no mezclar `customer`/`client`/`user`).
 * **Fechas y horas:** instantes en formato ISO-8601 con zona horaria. `createdAt`, `updatedAt`, `assignedAt` representan un **instante global** (`2026-10-02T10:30:00Z`). Para citas civiles sin hora se usa `2026-10-02`; para hora local con offset, `2026-10-02T10:30:00+02:00`.
@@ -245,6 +259,6 @@ Ejemplo de respuesta para una Asignación (`GET /api/incidents/{id}/assignments`
 * **Semántica de nulos y colecciones:** el contrato distingue *campo ausente* (no aplica / no enviado), `null` (valor conocido como nulo), cadena vacía y colección vacía. `[]` significa "sin elementos", no "desconocido".
 * **Identificadores:** los identificadores son **opacos** para el cliente; no se deriva información de su formato ni se asume su tipo interno.
 
-## 11. Extensión de respuestas
+## 12. Extensión de respuestas
 
 Para relaciones se usa referencia simple por defecto (`"technicianId": "USR-12"`). Cuando se necesite más detalle, se permite **expansión controlada** (`?expand=technician`), limitando relaciones, profundidad y número total, y vigilando fuga de datos sensibles, consultas N+1 y latencia. La selección de campos (`?fields=id,title,status`) es opcional y debe limitarse por permisos.
