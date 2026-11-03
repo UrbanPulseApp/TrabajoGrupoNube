@@ -24,6 +24,7 @@ const labels = {
 export default function IncidentOperations({ incident, role, onChanged }) {
   const canManage = role === "OPERATOR" || role === "ADMIN";
   const canViewAssignments = canManage || role === "TECHNICIAN";
+  const canUpdateAssignment = canManage || role === "TECHNICIAN";
   const [status, setStatus] = useState(transitions[incident.status]?.[0] || "");
   const [reason, setReason] = useState("");
   const [department, setDepartment] = useState("");
@@ -90,7 +91,44 @@ export default function IncidentOperations({ incident, role, onChanged }) {
           <button type="submit" disabled={loading}>{loading ? "Guardando…" : "Crear asignación"}</button>
         </form>
       )}
-      {canViewAssignments && <div className="operations-assignments"><strong>Asignaciones</strong>{assignments.length === 0 ? <small>No hay asignaciones registradas.</small> : assignments.map((assignment) => <div className="operation-assignment" key={assignment.id}><div><b>{assignment.department}</b><span>{labels[assignment.status] || assignment.status}</span>{assignment.notes && <small>{assignment.notes}</small>}</div>{canManage && assignment.status === "ACTIVE" && <div className="assignment-buttons"><button type="button" disabled={loading} onClick={() => closeAssignment(assignment.id, "COMPLETED")}>Completar</button><button type="button" disabled={loading} onClick={() => closeAssignment(assignment.id, "CANCELLED")}>Cancelar</button></div>}</div>)}</div>}
+      {canViewAssignments && (
+          <div className="operations-assignments">
+            <strong>Asignaciones</strong>
+            {assignments.length === 0 ? (
+                <small>No hay asignaciones registradas.</small>
+            ) : (
+                assignments.map((assignment) => (
+                    <div className="operation-assignment" key={assignment.id}>
+                      <div>
+                        <b>{assignment.department}</b>
+                        <span>{labels[assignment.status] || assignment.status}</span>
+                        {assignment.notes && <small>{assignment.notes}</small>}
+                      </div>
+
+                      {/* Usar canUpdateAssignment en lugar de canManage */}
+                      {canUpdateAssignment && assignment.status === "ACTIVE" && (
+                          <div className="assignment-buttons">
+                            <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => closeAssignment(assignment.id, "COMPLETED")}
+                            >
+                              Completar
+                            </button>
+                            <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => closeAssignment(assignment.id, "CANCELLED")}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                      )}
+                    </div>
+                ))
+            )}
+          </div>
+      )}
       {error && <p className="operation-error" role="alert">{error}</p>}
     </section>
   );

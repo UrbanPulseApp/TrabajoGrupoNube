@@ -97,7 +97,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.PATCH, "/api/incidents/*").hasAnyRole("OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/incidents/*/assignments").hasAnyRole("OPERATOR", "TECHNICIAN", "ADMIN")
-                .antMatchers(HttpMethod.PATCH, "/api/incidents/*/assignments/*").hasAnyRole("OPERATOR", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/incidents/*/assignments/*").hasAnyRole("OPERATOR","TECHNICIAN", "ADMIN")
                 .antMatchers("/api/analytics/**").hasAnyRole("OPERATOR", "ADMIN", "ANALYST")
                 .antMatchers("/api/admin/**").hasRole("ADMIN")
                 .antMatchers("/api/**").authenticated()
