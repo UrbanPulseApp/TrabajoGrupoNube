@@ -2,7 +2,7 @@
 
 Frontend de UrbanPulse con acceso en `/login`, registro ciudadano, reporte de incidencias, evidencias y seguimiento público.
 
-**Requiere Node >= 18.** La versión recomendada para este proyecto es Node 20 (indicada en `.nvmrc`).
+**Requiere Node >= 18** (definido en `engines` de `package.json`). La versión fijada para el desarrollo local en `.nvmrc` es Node 18.
 
 ## Desarrollo local
 
