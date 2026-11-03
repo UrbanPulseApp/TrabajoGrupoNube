@@ -1,264 +1,92 @@
-# Diseño de API REST - UrbanPulse
+# API REST - UrbanPulse
 
-Este documento define el contrato de la API para UrbanPulse. La API debe estar centrada en recursos (usando sustantivos en plural) y no en acciones, delegando la intención de la operación al método HTTP. El método indica la operación; la URL identifica el recurso.
+La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan sesión web y requieren el token CSRF. Todas las entidades principales (`Incident`, `User`, `Assignment`, `Attachment`, `StatusChange`, `Notification`) se identifican mediante `UUID` opacos.
 
-## 0. Principios generales
+## Autenticación y cuentas
 
-* **REST antes que REST-like:** no se usan verbos en la ruta (`/getIncidents`, `/createIncident` son incorrectos); la acción la expresa el método HTTP.
-* **Interfaz uniforme:** mismo patrón predecible para todos los recursos (`GET`, `POST`, `PUT`/`PATCH`, `DELETE` sobre `/recurso` y `/recurso/{id}`).
-* **Sin estado (stateless):** cada petición es autocontenida; la autenticación viaja en cada petición mediante `Authorization: Bearer <token>`. El servidor no guarda sesión en memoria.
-* **Cacheable:** se usan cabeceras de caché (`Cache-Control`, `ETag`) en recursos de lectura cuando aplique.
-* **Separación cliente/servidor** y **sistema por capas** (la API puede ir detrás de un API Gateway o balanceador).
-* **DTOs** como frontera: nunca se exponen entidades de persistencia directamente.
-
-## 1. Versionado de la API
-
-Los cambios incompatibles en el contrato se introducen mediante versionado explícito en la ruta:
-
-```
-/api/v1/incidents
-/api/v2/incidents
-```
-
-* Se cambia de versión cuando el contrato introduce una incompatibilidad **observable para el cliente** (renombrar/quitar campos, cambiar tipos, cambiar reglas de validación o significados).
-* Los cambios compatibles (añadir un campo opcional, añadir un endpoint nuevo) no requieren nueva versión.
-* Cada versión tiene un ciclo de retirada definido y documentado.
-* **Todos los ejemplos de este documento usan el prefijo `/api/v1`.** El backend deberá exponer la API bajo este prefijo.
-
-## 2. Rutas Principales (Endpoints)
-
-### 2.1 Recurso: Incidencias (/api/v1/incidents)
-
-* **POST /api/v1/incidents**: Registra un nuevo reporte. Devuelve `201 Created` con cabecera `Location` apuntando al recurso creado.
-* **GET /api/v1/incidents**: Obtiene el catálogo de incidencias. Los filtros, la ordenación y la paginación se aplican mediante parámetros de consulta (query parameters), por ejemplo: `?status=VALIDATED&sort=-priority`.
-* **GET /api/v1/incidents/{id}**: Consulta los detalles de una incidencia específica identificada por su parámetro de ruta (path parameter).
-* **PUT /api/v1/incidents/{id}**: Reemplaza **completamente** la incidencia (el cuerpo debe ser la representación completa).
-* **PATCH /api/v1/incidents/{id}**: Modifica **parcialmente** un recurso, enviando en el cuerpo (body) únicamente los campos que deben cambiar (ej. asignar un técnico).
-* **DELETE /api/v1/incidents/{id}**: Elimina la incidencia. Devuelve `204 No Content`.
-
-### 2.2 Asignaciones de una incidencia (/api/v1/incidents/{id}/assignments)
-
-La asignación es un subrecurso cuya existencia depende de la incidencia (jerarquía con dependencia):
-
-* **POST /api/v1/incidents/{id}/assignments**: Asigna la incidencia a un destino operativo. Devuelve `201 Created` con `Location`. Operación **idempotente**: no crea duplicados; si ya existe una asignación activa para el mismo destino, devuelve `409 Conflict` (o la existente).
-* **GET /api/v1/incidents/{id}/assignments**: Lista las asignaciones de la incidencia (admite paginación).
-
-### 2.3 Acciones de dominio
-
-Las operaciones de negocio que no encajan en CRUD se modelan como **acciones sobre el recurso**, no como un `PATCH` que cambia un estado a ciegas:
-
-* **POST /api/v1/incidents/{id}/cancellation**: Cancela una incidencia. El cuerpo puede incluir el motivo (`{ "reason": "duplicate" }`).
-* **POST /api/v1/incidents/{id}/confirmation**: Confirma una incidencia pendiente de validación.
-
-Una acción de dominio representa una **intención propia** con reglas y efectos secundarios, no una modificación arbitraria de campos.
-
-### 2.4 Recurso: Usuarios (/api/v1/users)
-
-* **POST /api/v1/users**: Crea un nuevo usuario en la plataforma.
-* **GET /api/v1/users**: Lista usuarios (paginado).
-* **GET /api/v1/users/{id}**: Recupera la información detallada de un usuario.
-
-La representación de creación (con `password`) es **distinta** de la de respuesta; la contraseña **nunca** aparece en ninguna respuesta.
-
-### 2.5 Recurso: Contexto urbano (/api/v1/incidents/{id}/context)
-
-* **GET /api/v1/incidents/{id}/context**: Recupera el contexto urbano (localización, meteorología, tráfico y observaciones externas) asociado a la incidencia.
-
-## 3. Métodos HTTP y su semántica
-
-| Método | Uso | Idempotente | Cuerpo |
-|---|---|---|---|
-| GET | Consultar recursos | Sí | No |
-| POST | Crear recurso o ejecutar acción | Normalmente no | Sí |
-| PUT | Reemplazar un recurso completo | Sí | Sí |
-| PATCH | Modificar parcialmente | No garantizado | Sí |
-| DELETE | Eliminar un recurso | Sí (estado final "no existe") | No |
-
-* **POST** lo decide el servidor (asigna el `id`). Repetirlo puede crear duplicados; cuando la operación deba ser idempotente (p. ej. asignar), se valida y se devuelve el estado existente en lugar de duplicar.
-* **PUT** requiere enviar la representación completa del recurso.
-* **PATCH** envía solo los campos que cambian.
-
-## 4. Códigos de Estado HTTP
-
-**Éxito (2xx):**
-* **200 OK**: La operación se realizó correctamente.
-* **201 Created**: El recurso se creó con éxito tras una petición POST. Incluye cabecera `Location`.
-* **204 No Content**: Operación correcta, pero sin cuerpo de respuesta.
-
-**Redirección (3xx):** poco habituales en la API; `304 Not Modified` puede usarse con caché.
-
-**Errores del Cliente (4xx):**
-* **400 Bad Request**: La petición está mal formada (JSON inválido, parámetros incorrectos).
-* **401 Unauthorized**: Falta autenticación o el token es inválido.
-* **403 Forbidden**: El usuario está autenticado pero carece de permisos para realizar esa acción.
-* **404 Not Found**: El recurso o identificador solicitado no existe.
-* **409 Conflict**: Conflicto con el estado actual (p. ej. recurso duplicado o asignación ya existente).
-* **422 Unprocessable Entity**: Los datos tienen el formato correcto, pero fallan en las reglas de validación del dominio.
-
-**Errores del Servidor (5xx):**
-* **500 Internal Server Error**: Error interno e inesperado en el servidor.
-* **503 Service Unavailable**: El servicio externo o la base de datos no están disponibles.
-
-## 5. Estructura Común de Errores
-
-Se separan cinco responsabilidades: el código HTTP, el código interno del backend (`code`), el mensaje humano (`title`/`detail`), los detalles de campo (`errors`) y el identificador de trazabilidad (`requestId`).
-
-* El cliente debe comparar el campo `code`, **nunca** cadenas de mensaje traducibles o cambiantes.
-* **Nunca** se exponen detalles internos (SQL, nombres de tablas, restricciones, trazas).
-
-Todos los errores devueltos por la API de UrbanPulse seguirán estrictamente este formato unificado. Ejemplo de respuesta para un error de validación:
-
-```json
-{
-  "type": "https://api.urbanpulse.com/problems/validation-error",
-  "title": "Validation failed",
-  "status": 422,
-  "code": "VALIDATION_ERROR",
-  "detail": "Two fields contain invalid values.",
-  "instance": "/api/v1/incidents",
-  "requestId": "req_8Xy3Z",
-  "errors": [
-    {
-      "field": "title",
-      "code": "MISSING_FIELD",
-      "message": "The title is required."
-    },
-    {
-      "field": "latitude",
-      "code": "OUT_OF_RANGE",
-      "message": "Latitude must be between -90 and 90."
-    }
-  ]
-}
-```
-
-Ejemplo de conflicto de recurso existente:
-
-```json
-{
-  "type": "https://api.urbanpulse.com/problems/conflict",
-  "title": "Resource already exists",
-  "status": 409,
-  "code": "ASSIGNMENT_ALREADY_EXISTS",
-  "detail": "The incident already has an active assignment for this destination.",
-  "instance": "/api/v1/incidents/INC-1024/assignments",
-  "requestId": "req_8Xy3Z"
-}
-```
-
-## 6. Identificador de petición (X-Request-ID)
-
-* El backend genera un identificador (UUID) por petición y lo devuelve en la cabecera de respuesta `X-Request-ID`.
-* El mismo valor se registra en los logs, permitiendo correlacionar la respuesta del cliente con las trazas internas.
-* En errores, ese identificador aparece también en el campo `requestId` del cuerpo de error.
-
-```
-HTTP/1.1 200 OK
-X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
-Content-Type: application/json
-```
-
-## 7. CSRF y autenticación
-
-La autenticación de la API se basa en `Authorization: Bearer <token>` (JWT), con peticiones
-**stateless**. Al no usar cookies de sesión, el navegador no adjunta credenciales
-automáticamente ante sitios de terceros y, por tanto, **CSRF no aplica**.
-
-* **Por qué no aplica:** el ataque CSRF explota el envío automático de cookies de sesión por parte
-  del navegador. Con `Bearer <token>` el cliente decide explícitamente qué token envía en cada
-  petición, de modo que un sitio malicioso no puede forjar una petición autenticada.
-* **Si en el futuro** se introduce autenticación basada en cookies de sesión, será **obligatorio**
-  añadir protección CSRF (token) en todos los métodos que modifican estado (`POST`, `PUT`,
-  `PATCH`, `DELETE`).
-* **Requisito del contrato:** la API solo acepta credenciales vía `Authorization`; las cookies no
-  se usan como mecanismo de autenticación.
-
-## 8. Cabeceras HTTP relevantes
-
-| Cabecera | Uso | Ejemplo |
+| Método y ruta | Acceso | Función |
 |---|---|---|
-| `Content-Type` | Formato del cuerpo enviado | `application/json` |
-| `Accept` | Formato esperado por el cliente | `application/json` |
-| `Authorization` | Credenciales o token | `Bearer <token>` |
-| `Location` | URL del recurso recién creado | `/api/v1/incidents/INC-1024` |
-| `X-Request-ID` | Trazabilidad de la petición | `550e8400-...` |
+| `GET /api/auth/csrf` | Público | Obtiene el token que debe enviarse como `X-XSRF-TOKEN` en operaciones de escritura. |
+| `POST /api/auth/login` | Público + CSRF | Inicia sesión con correo y contraseña y devuelve el perfil sin contraseña. |
+| `GET /api/auth/me` | Sesión iniciada | Devuelve el perfil de la sesión actual. |
+| `POST /api/auth/logout` | Sesión iniciada + CSRF | Cierra la sesión. |
+| `POST /api/users` | Público + CSRF | Registra una cuenta ciudadana con identificador `UUID`. El cliente no puede elegir su rol. |
+| `POST /api/admin/users` | `ADMIN` + CSRF | Crea cuentas con rol municipal. |
 
-## 9. Filtros, ordenación y paginación
+Las contraseñas se guardan con BCrypt. La cookie de sesión es `HttpOnly`; la cookie `XSRF-TOKEN` permite al frontend adjuntar el token CSRF. El primer administrador se crea al iniciar el backend cuando están definidas `URBANPULSE_ADMIN_EMAIL` y `URBANPULSE_ADMIN_PASSWORD`. No se usan credenciales predeterminadas.
 
-### 9.1 Filtros y búsqueda
-* Filtros como query parameters combinables: `GET /api/v1/incidents?status=VALIDATED&priority=HIGH&category=TRAFFIC_LIGHT`.
-* No se crean endpoints independientes por filtro.
-* Ordenación: `?sortBy=createdAt&order=desc` (desc indica orden descendiente).
-* Búsqueda textual sobre colecciones conocidas: `GET /api/v1/incidents?q=semaforo`; los filtros estructurados se mantienen como query parameters.
+Roles disponibles: `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN` y `ANALYST`. El registro público siempre crea `CITIZEN`; solo `ADMIN` puede asignar otros roles.
 
-### 9.2 Paginación
-Toda colección devuelve una envoltura con metadatos de navegación, no un array plano:
+## Permisos
 
-```json
-{
-  "items": [
-    { "id": "INC-1024", "title": "Semáforo averiado", "status": "VALIDATED" }
-  ],
-  "pagination": {
-    "page": 2,
-    "pageSize": 20,
-    "totalItems": 135,
-    "totalPages": 7
-  }
-}
-```
+| Operación | Permiso |
+|---|---|
+| Listar/consultar incidencias, contexto urbano, duplicados, historial y descargar evidencias | Público |
+| Registrar incidencias y subir evidencias | `CITIZEN`, `OPERATOR`, `ADMIN` |
+| Cambiar estado de una incidencia | `OPERATOR`, `ADMIN` |
+| Crear asignaciones | `OPERATOR`, `ADMIN` |
+| Listar asignaciones | `OPERATOR`, `TECHNICIAN`, `ADMIN` |
+| Cerrar o cancelar asignaciones | `OPERATOR`, `ADMIN` |
+| Consultar indicadores analíticos y métricas territoriales | `OPERATOR`, `ADMIN`, `ANALYST` |
+| Crear cuentas con roles municipales | `ADMIN` |
 
-* Se admite **paginación por página** (`?page=2&pageSize=20`) y, para grandes volúmenes o colecciones cambiantes, **paginación por cursor** (`?pageSize=20&pageToken=<opaco>`), tratando el token como opaco.
-* Nunca se devuelven colecciones completas sin límite.
+Las respuestas públicas no incluyen correos, contraseñas ni el identificador del reportero. La asociación de incidencias a cuentas ciudadanas y la vista de “mis incidencias” todavía no está modelada.
 
-## 10. Estructura de Respuestas (DTOs)
+## Incidencias
 
-Para evitar exponer el modelo de base de datos directamente, las respuestas utilizarán DTOs (Data Transfer Objects) en formato JSON.
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents` | Registra una incidencia en `REPORTED`, crea su evento inicial y enriquece con contexto urbano. |
+| `GET /api/incidents` | Lista con `status`, `category`, `q`, `from`, `to`, `page`, `size` (1-100) y `sort`. |
+| `GET /api/incidents/duplicates` | Detecta posibles incidencias duplicadas en un radio (metros) por coordenadas y categoría. |
+| `GET /api/incidents/{id}` | Consulta el detalle de la incidencia. |
+| `GET /api/incidents/{id}/context` | Consulta el contexto urbano enriquecido (barrio, distrito, clima, tráfico, observaciones y activos físicos cercanos). |
+| `PATCH /api/incidents/{id}` | Cambia estado según la máquina de estados y conserva el motivo en historial. |
+| `GET /api/incidents/{id}/status-changes` | Devuelve el historial cronológico. |
 
-Ejemplo de respuesta para una Incidencia (`GET /api/v1/incidents/{id}`):
+Ejemplo: `GET /api/incidents?status=REPORTED&q=farola&page=0&size=10&sort=-createdAt`.
+Ejemplo duplicados: `GET /api/incidents/duplicates?latitude=36.7185&longitude=-4.4205&category=CALZADA&radiusMeters=50`.
 
-```json
-{
-  "id": "INC-1024",
-  "title": "Semáforo averiado en Alameda Principal",
-  "description": "El semáforo de peatones no cambia a verde.",
-  "status": "VALIDATED",
-  "category": "TRAFFIC_LIGHT",
-  "priority": "HIGH",
-  "location": {
-    "latitude": 36.7184,
-    "longitude": -4.4201,
-    "district": "Centro"
-  },
-  "createdAt": "2026-10-02T10:30:00Z",
-  "updatedAt": "2026-10-02T11:05:00Z"
-}
-```
+El PATCH recibe `{"status":"VALIDATED","reason":"Datos suficientes"}`. `reason` es obligatorio para `REJECTED`. Transiciones admitidas: `REPORTED → VALIDATED/REJECTED`, `VALIDATED → ASSIGNED/REJECTED`, `ASSIGNED → IN_PROGRESS/VALIDATED`, `IN_PROGRESS → RESOLVED`, `RESOLVED → CLOSED/REOPENED` y `REOPENED → ASSIGNED/IN_PROGRESS`.
 
-Ejemplo de respuesta para una Asignación (`GET /api/v1/incidents/{id}/assignments`):
+## Contexto Urbano y Activos Físicos (RF21, RF22, RF23, RF26)
 
-```json
-{
-  "id": "ASG-77",
-  "incidentId": "INC-1024",
-  "department": "MOBILITY",
-  "teamId": "TEAM-3",
-  "technicianId": "USR-12",
-  "status": "ACTIVE",
-  "notes": "Se envía equipo de señalización.",
-  "assignedAt": "2026-10-02T12:00:00+02:00",
-  "completedAt": null
-}
-```
+El contexto urbano se captura de forma automática en la creación mediante degradación controlada:
+- **RF21 Geocodificación y Territorio:** Identificación de barrio, distrito y dirección postal aproximada en Málaga.
+- **RF22 Activos Físicos Cercanos:** Localización de elementos urbanos (semáforos, paradas de autobús, farolas) en un radio de 100m.
+- **RF23 Variables Ambientales:** Datos de clima (temperatura, humedad) y estado del tráfico.
+- **RF26 Degradación Controlada:** Si las fuentes externas fallan, el registro y consulta nunca se bloquean; se asignan valores de fallback documentados.
 
-## 11. Convenciones de datos
+## Analítica e Indicadores Territoriales
 
-* **Nombres consistentes:** `camelCase` en JSON, sin abreviaturas oscuras, mismo término para el mismo concepto (no mezclar `customer`/`client`/`user`).
-* **Fechas y horas:** instantes en formato ISO-8601 con zona horaria. `createdAt`, `updatedAt`, `assignedAt` representan un **instante global** (`2026-10-02T10:30:00Z`). Para citas civiles sin hora se usa `2026-10-02`; para hora local con offset, `2026-10-02T10:30:00+02:00`.
-* **Unidades explícitas:** magnitudes con su unidad o moneda (`{ "amount": 1999, "currency": "EUR" }`; distancias en metros indicadas en el nombre del campo, p. ej. `precisionMeters`).
-* **Semántica de nulos y colecciones:** el contrato distingue *campo ausente* (no aplica / no enviado), `null` (valor conocido como nulo), cadena vacía y colección vacía. `[]` significa "sin elementos", no "desconocido".
-* **Identificadores:** los identificadores son **opacos** para el cliente; no se deriva información de su formato ni se asume su tipo interno.
+| Método y ruta | Acceso | Función |
+|---|---|---|
+| `GET /api/analytics/summary` | `OPERATOR`, `ADMIN`, `ANALYST` | Devuelve totales acumulados, desglose por estado, por categoría, por distrito territorial y conteos de los últimos 7 y 30 días. |
 
-## 12. Extensión de respuestas
+## Asignaciones
 
-Para relaciones se usa referencia simple por defecto (`"technicianId": "USR-12"`). Cuando se necesite más detalle, se permite **expansión controlada** (`?expand=technician`), limitando relaciones, profundidad y número total, y vigilando fuga de datos sensibles, consultas N+1 y latencia. La selección de campos (`?fields=id,title,status`) es opcional y debe limitarse por permisos.
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents/{id}/assignments` | Asigna una incidencia validada o reabierta a un departamento y opcionalmente equipo/técnico. |
+| `GET /api/incidents/{id}/assignments` | Lista las asignaciones. |
+| `PATCH /api/incidents/{id}/assignments/{assignmentId}` | Cierra una asignación activa como `COMPLETED` o `CANCELLED`. |
+
+Las notas de un PATCH se agregan a las notas existentes. Cerrar una asignación no resuelve automáticamente la incidencia.
+
+## Evidencias
+
+| Método y ruta | Función |
+|---|---|
+| `POST /api/incidents/{id}/attachments` | Sube `multipart/form-data` con campo `file`. Hasta 4 evidencias por incidencia, JPG/PNG/WEBP/PDF, máximo 10 MB cada una. |
+| `GET /api/incidents/{id}/attachments` | Lista metadatos. |
+| `GET /api/incidents/{id}/attachments/{attachmentId}` | Descarga el archivo. |
+
+Los bytes se guardan fuera de PostgreSQL en `uploads/attachments` por defecto. Configura `ATTACHMENTS_DIRECTORY` con almacenamiento persistente al desplegar.
+
+## Errores
+
+Las respuestas de error incluyen `type`, `title`, `status`, `code`, `detail`, `instance`, `requestId` y, en validaciones, `errors`. `X-Request-ID` también se incluye en la respuesta. Códigos usuales: `400` entrada inválida, `401` sesión ausente o credenciales inválidas, `403` rol insuficiente/CSRF, `404` recurso inexistente, `409` correo duplicado, `413` archivo grande y `422` regla de dominio.
+
+## Fuera del alcance actual
+
+Quedan pendientes la asociación de reportes al ciudadano para consultar únicamente sus propios avisos en panel personal, recuperación de contraseña y verificación de correo.

@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,10 +17,12 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(roles = "OPERATOR")
 class AssignmentControllerTest {
 
     @Autowired
@@ -58,6 +61,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(
                         post("/api/incidents/" + incidentId + "/assignments")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json)
                 )
@@ -79,6 +83,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(
                         post("/api/incidents/" + UUID.randomUUID() + "/assignments")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json)
                 )
@@ -97,6 +102,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(
                 post("/api/incidents/" + incidentId + "/assignments")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                                 .content(json)
                 )
@@ -111,6 +117,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(
                         post("/api/incidents/" + incidentId + "/assignments")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"notes\": \"sin departamento\"}")
                 )
@@ -126,6 +133,7 @@ class AssignmentControllerTest {
 
         mockMvc.perform(
                 post("/api/incidents/" + incidentId + "/assignments")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"department\": \"LIMPIEZA\"}")
         ).andExpect(status().isCreated());

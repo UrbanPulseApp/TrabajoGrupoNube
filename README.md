@@ -15,9 +15,9 @@ Plataforma inteligente para la gestión, seguimiento y resolución de incidencia
 * **Seguimiento de incidencias**: Búsqueda, filtros, paginación e historial de transiciones.
 * **Evidencias**: Carga y descarga de imágenes y documentos asociados al reporte.
 * **Asignaciones**: Flujo básico para asignar y cerrar trabajos municipales.
+* **Cuentas y permisos**: Registro ciudadano, inicio/cierre de sesión y autorización por rol en operaciones municipales.
 * **Tratamiento Resiliente de Errores**: Respuestas de API estandarizadas con trazabilidad mediante UUID.
 
-> La autenticación y autorización por roles, y los módulos `UrbanAsset`, `ExternalObservation` y `UrbanContext`, todavía no están implementados. Las transiciones operativas no deben publicarse en producción hasta proteger la API con RBAC.
 
 ---
 

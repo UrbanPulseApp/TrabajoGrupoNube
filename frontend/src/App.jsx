@@ -1,5 +1,10 @@
+import { useEffect, useState } from "react";
 import IncidentForm from "./components/IncidentForm.jsx";
 import IncidentBoard from "./components/IncidentBoard.jsx";
+import AnalyticsDashboard from "./components/AnalyticsDashboard.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import { getCurrentUser, logout } from "./services/AuthService.js";
+import "./app-auth.css";
 
 function BrandMark() {
   return (
@@ -12,7 +17,9 @@ function BrandMark() {
   );
 }
 
-function Header() {
+function Header({ currentUser, onNavigate, onLogout }) {
+  const canViewAnalytics = currentUser && ["OPERATOR", "ADMIN", "ANALYST"].includes(currentUser.role);
+
   return (
     <header className="site-header">
       <a className="brand" href="#inicio" aria-label="UrbanPulse, inicio">
@@ -23,11 +30,11 @@ function Header() {
         <a className="nav-link active" href="#reportar">Reportar incidencia</a>
         <a className="nav-link" href="#incidencias">Seguimiento</a>
         <a className="nav-link" href="#como-funciona">Cómo funciona</a>
+        {canViewAnalytics && <a className="nav-link" href="#analitica">Analítica</a>}
       </nav>
-      <a className="header-action" href="#reportar">
-        <span className="online-dot" />
-        <span>Ciudadanía · Málaga</span>
-      </a>
+      {currentUser
+        ? <button className="header-action" type="button" onClick={onLogout} title={`Sesión de ${currentUser.name}`}><span className="online-dot" /><span>Cerrar sesión · {currentUser.name} ({currentUser.role})</span></button>
+        : <a className="header-action" href="/login" onClick={(event) => { event.preventDefault(); onNavigate("/login"); }}><span className="online-dot" /><span>Iniciar sesión</span></a>}
     </header>
   );
 }
@@ -38,7 +45,7 @@ function Intro() {
       <div className="intro-copy">
         <div className="eyebrow"><span className="eyebrow-line" /> MÁLAGA · CIUDADANÍA</div>
         <h1>Tu ciudad, <span>en movimiento.</span></h1>
-        <p>Una farola apagada, un bache, una papelera llena. Cuéntanos qué ocurre y ayudemos a que las cosas mejoren.</p>
+        <p>Una farola apagada, un bache, una papelera llena. Cuéntanos qué ocurre y enriqueceremos cada aviso con contexto urbano y territorial.</p>
         <div className="intro-note">
           <span className="note-icon" aria-hidden="true">↗</span>
           <span>Un pequeño aviso puede cambiar toda una calle.</span>
@@ -63,27 +70,71 @@ function Steps() {
       <div className="steps-heading"><span className="section-kicker">ASÍ DE SENCILLO</span><span className="steps-caption">Solo te llevará un minuto</span></div>
       <div className="step"><span className="step-number">01</span><span className="step-icon">⌖</span><div><strong>Ubica</strong><small>Señala el lugar exacto</small></div></div>
       <span className="step-connector" />
-      <div className="step"><span className="step-number">02</span><span className="step-icon">✎</span><div><strong>Describe</strong><small>Cuéntanos qué sucede</small></div></div>
+      <div className="step"><span className="step-number">02</span><span className="step-icon">✎</span><div><strong>Describe</strong><small>Detección inteligente de duplicados</small></div></div>
       <span className="step-connector" />
-      <div className="step"><span className="step-number">03</span><span className="step-icon">↗</span><div><strong>Enviado</strong><small>El equipo municipal lo recibe</small></div></div>
+      <div className="step"><span className="step-number">03</span><span className="step-icon">↗</span><div><strong>Enviado</strong><small>Enriquecido con contexto y activos</small></div></div>
     </section>
   );
 }
 
 function App() {
+  const [route, setRoute] = useState(window.location.pathname);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [boardRefresh, setBoardRefresh] = useState(0);
+  const [authError, setAuthError] = useState("");
+
+  const canViewAnalytics = currentUser && ["OPERATOR", "ADMIN", "ANALYST"].includes(currentUser.role);
+
+  useEffect(() => {
+    const onPopState = () => setRoute(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    getCurrentUser().then(setCurrentUser).catch(() => setCurrentUser(null)).finally(() => setAuthLoading(false));
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  function navigate(path) {
+    window.history.pushState({}, "", path);
+    setRoute(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function handleLogout() {
+    setAuthError("");
+    try {
+      await logout();
+      setCurrentUser(null);
+    } catch (error) {
+      setAuthError(error.message || "No se pudo cerrar la sesión.");
+    }
+  }
+
+  if (route === "/login") {
+    return <LoginPage onAuthenticated={(user) => { setCurrentUser(user); navigate("/"); }} onNavigateHome={() => navigate("/")} />;
+  }
+
   return (
     <div className="app-shell">
-      <Header />
+      <Header currentUser={currentUser} onNavigate={navigate} onLogout={handleLogout} />
       <main>
         <Intro />
         <Steps />
-        <IncidentBoard />
+        <IncidentBoard refreshKey={boardRefresh} currentUser={currentUser} onChanged={() => setBoardRefresh((value) => value + 1)} />
+
+        {/* Panel de Analítica Territorial para Operadores / Administradores / Analistas */}
+        {canViewAnalytics && <AnalyticsDashboard />}
+
         <section className="report-section" id="reportar">
+          {authError && <div className="auth-session-error" role="alert">{authError}</div>}
           <div className="report-heading">
             <div><span className="section-kicker">TU VOZ CUENTA</span><h2>¿Qué está pasando?</h2></div>
             <span className="required-note"><i /> Campos obligatorios</span>
           </div>
-          <IncidentForm />
+          {authLoading
+            ? <div className="login-gate">Comprobando la sesión…</div>
+            : currentUser
+              ? <IncidentForm onCreated={() => setBoardRefresh((value) => value + 1)} />
+              : <div className="login-gate"><strong>Inicia sesión para comunicar una incidencia.</strong><span>Tu cuenta permite consultar y gestionar tus avisos.</span><a href="/login" onClick={(event) => { event.preventDefault(); navigate("/login"); }}>Iniciar sesión o crear cuenta <span aria-hidden="true">↗</span></a></div>}
           <div className="privacy-note"><span aria-hidden="true">◈</span> Tus datos se utilizan únicamente para gestionar esta incidencia.</div>
         </section>
         <footer className="site-footer"><a className="brand footer-brand" href="#inicio"><BrandMark /><span>urban<span className="brand-light">pulse</span></span></a><span>Una ciudad más cuidada empieza contigo.</span><span className="footer-city">MÁLAGA <i>·</i> 2026</span></footer>

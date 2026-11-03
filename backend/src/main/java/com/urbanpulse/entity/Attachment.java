@@ -1,21 +1,44 @@
 package com.urbanpulse.entity;
 
-import javax.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
-//IMPORTANTE, ESTO ES UN MOOCKUP PRACTICAMENTE YA LUEGO HARÉ PARA SUBIR ARCHIVOS,
-// es decir faltan los endpoints de subir archivos
+
 @Entity
 @Table(name = "attachments")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Attachment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false)
-    private UUID incidentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "incident_id", nullable = false)
+    private Incident incident;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploader_id")
+    private User uploader;
 
     @Column(nullable = false)
     private String filename;
@@ -32,9 +55,14 @@ public class Attachment {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public Attachment() {
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 
+    // Getters y Setters explícitos por compatibilidad
     public UUID getId() {
         return id;
     }
@@ -43,12 +71,20 @@ public class Attachment {
         this.id = id;
     }
 
-    public UUID getIncidentId() {
-        return incidentId;
+    public Incident getIncident() {
+        return incident;
     }
 
-    public void setIncidentId(UUID incidentId) {
-        this.incidentId = incidentId;
+    public void setIncident(Incident incident) {
+        this.incident = incident;
+    }
+
+    public User getUploader() {
+        return uploader;
+    }
+
+    public void setUploader(User uploader) {
+        this.uploader = uploader;
     }
 
     public String getFilename() {
@@ -90,4 +126,19 @@ public class Attachment {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public UUID getIncidentId() {
+        return this.incident != null ? this.incident.getId() : null;
+    }
+
+    public void setIncidentId(UUID incidentId) {
+        if (incidentId != null) {
+            Incident dummyIncident = new Incident();
+            dummyIncident.setId(incidentId);
+            this.incident = dummyIncident;
+        } else {
+            this.incident = null;
+        }
+    }
+
 }
