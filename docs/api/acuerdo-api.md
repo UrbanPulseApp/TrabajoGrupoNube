@@ -1,6 +1,6 @@
 # Diseño de API REST - UrbanPulse
 
-La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan **sesión web (cookie `HttpOnly`)** y requieren el **token CSRF**. Todas las entidades principales (`Incident`, `User`, `Assignment`, `Attachment`, `StatusChange`, `Notification`) se identifican mediante **`UUID` opacos**.
+La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan **sesión web (cookie `HttpOnly`)** y requieren el **token CSRF**, salvo `POST /api/auth/login` y `POST /api/auth/logout`, que están exentos. Todas las entidades principales (`Incident`, `User`, `Assignment`, `Attachment`, `StatusChange`, `Notification`) se identifican mediante **`UUID` opacos**.
 
 ## 0. Principios generales
 
@@ -75,7 +75,7 @@ El contexto incluye:
 * **Territorio:** barrio, distrito y dirección postal aproximada en Málaga.
 * **Activos físicos cercanos:** elementos urbanos (semáforos, paradas de autobús, farolas) en un radio de 100 m.
 * **Variables ambientales:** clima (temperatura, humedad) y estado del tráfico.
-* **Observaciones externas:** datos de fuentes de terceros asociados a la ubicación.
+* **Observaciones externas:** datos asociados a la ubicación; en esta versión provienen de **adaptadores mock** (sin servicios externos reales).
 
 ## 6. Analítica e indicadores territoriales (`/api/analytics`)
 
@@ -166,7 +166,7 @@ Ejemplo de error de validación:
   "code": "VALIDATION_ERROR",
   "detail": "Two fields contain invalid values.",
   "instance": "/api/incidents",
-  "requestId": "req_8Xy3Z",
+  "requestId": "550e8400-e29b-41d4-a716-446655440000",
   "errors": [
     {
       "field": "title",
@@ -184,12 +184,12 @@ Ejemplo de error de validación:
 
 ## 12. Identificador de petición (X-Request-ID)
 
-* El backend genera un identificador (UUID) por petición y lo devuelve en la cabecera de respuesta `X-Request-ID`.
-* El mismo valor se registra en los logs, permitiendo correlacionar la respuesta del cliente con las trazas internas.
-* En errores, ese identificador aparece también en el campo `requestId` del cuerpo de error.
+* En las **respuestas de error**, el backend genera un identificador (UUID) y lo devuelve tanto en la cabecera `X-Request-ID` como en el campo `requestId` del cuerpo `ApiError`.
+* Este identificador se genera en `GlobalExceptionHandler` (errores de aplicación) y en `SecurityConfiguration` (errores de seguridad 401/403).
+* No existe un interceptor o filtro que añada `X-Request-ID` a las respuestas correctas (2xx) ni correlación del mismo valor en los logs.
 
 ```
-HTTP/1.1 200 OK
+HTTP/1.1 422 Unprocessable Entity
 X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
 Content-Type: application/json
 ```
@@ -205,12 +205,12 @@ Content-Type: application/json
 
 ### 13.2. Paginación
 
-Los listados se paginan con `page` (base 0, por defecto 0) y `size` (1-100, por defecto 20). Ejemplo: `?page=0&size=10&sort=-createdAt`. La respuesta usa el formato de página de Spring:
+Los listados se paginan con `page` (base 0, por defecto 0) y `size` (1-100, por defecto 20). Ejemplo: `?page=0&size=10&sort=-createdAt`. La respuesta usa el formato de página de Spring; los identificadores son `UUID` opacos, no códigos legibles:
 
 ```json
 {
   "content": [
-    { "id": "INC-1024", "title": "Semáforo averiado", "status": "VALIDATED" }
+    { "id": "b3f1c2a4-1e2d-4c5b-8a9f-0d1e2f3a4b5c", "title": "Semáforo averiado", "status": "VALIDATED" }
   ],
   "page": 0,
   "size": 10,
@@ -219,7 +219,7 @@ Los listados se paginan con `page` (base 0, por defecto 0) y `size` (1-100, por 
 }
 ```
 
-* Nunca se devuelven colecciones completas sin límite.
+* La paginación aplica únicamente al listado de incidencias (`GET /api/incidents`). Otros listados (notificaciones, asignaciones y metadatos de adjuntos) devuelven colecciones completas sin paginar.
 
 ## 14. Estructura de respuestas (DTOs)
 
@@ -253,7 +253,7 @@ Ejemplo de asignación (`GET /api/incidents/{id}/assignments`):
   "department": "MOBILITY",
   "teamId": "c2e4a6b8-0d1f-4a3b-8c5d-7e9f1a2b3c4d",
   "technicianId": null,
-  "status": "ASSIGNED",
+  "status": "ACTIVE",
   "notes": "Se envía equipo de señalización.",
   "assignedAt": "2026-10-02T12:00:00",
   "completedAt": null
