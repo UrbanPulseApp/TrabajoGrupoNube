@@ -33,7 +33,7 @@ La arquitectura parte de un **monolito sencillo** y solo se incorporarán nuevos
 
 - **Gestión de incidencias**: creación, consulta y seguimiento completo del ciclo de vida, modelado como una **máquina de estados** (`REPORTED → VALIDATED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED`, con `REJECTED` y `REOPENED`), con historial auditado de transiciones.
 - **Geolocalización**: ubicación de avisos en mapa con coordenadas, barrio y distrito.
-- **Búsqueda, filtros, ordenación y paginación**: por estado, categoría, distrito, texto libre y rango de fechas, con paginación en servidor para evitar sobrecargar el cliente.
+- **Búsqueda, filtros, ordenación y paginación**: por estado, categoría, texto libre y rango de fechas, con paginación en servidor para evitar sobrecargar el cliente.
 - **Detección de duplicados**: identificación de posibles incidencias repetidas por proximidad geográfica y categoría.
 - **Evidencias**: carga y descarga de imágenes y documentos (JPG/PNG/WEBP/PDF, hasta 10 MB y 4 por incidencia), almacenados fuera de la base de datos relacional.
 - **Asignaciones**: flujo para asignar y cerrar trabajos municipales a departamentos y técnicos.
@@ -84,9 +84,9 @@ El desarrollo sigue las recomendaciones de **Twelve-Factor App** y las guías de
 - **Configuración fuera del código**: los secretos y parámetros por entorno viven en variables de entorno (`.env`), nunca en el código fuente. Se versiona `.env.example`, no `.env`.
 - **Dependencias explícitas**: todas las dependencias se declaran en `pom.xml` (Maven) y `package.json` (npm).
 - **Servicios externos como recursos conectados**: la base de datos se configura mediante URL de conexión intercambiable (`DATABASE_URL`).
-- **Procesos sin estado**: el estado de sesión no se confía a la memoria del proceso; la sesión web es una cookie `HttpOnly`.
+- **Autenticación por sesión**: la aplicación usa sesión web (`HttpSessionSecurityContextRepository`); la cookie `HttpOnly` transporta el identificador de sesión, cuyo estado se conserva en el servidor.
 - **Build, release, run separados**: la construcción y las pruebas se ejecutan en CI (GitHub Actions), no "a mano" en el servidor.
-- **Diseño REST**: recursos en plural, DTOs, errores estandarizados, paginación/filtrado/ordenación e idempotencia.
+- **Diseño REST**: recursos en plural, DTOs, errores estandarizados y paginación/filtrado/ordenación.
 - **Colaboración**: GitHub Flow con ramas `feature/`, `fix/`, `docs/`, `chore/` y *Conventional Commits* (ver [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ---
