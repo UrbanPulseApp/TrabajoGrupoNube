@@ -40,7 +40,7 @@
     {
       "title": "Semáforo averiado en parpadeo continuo",
       "description": "El semáforo del cruce peatonal de la Alameda Principal parpadea en naranja continuamente sin cambiar a rojo.",
-      "category": "ILUMINACION",
+      "category": "LIGHTING",
       "status": "VALIDATED",
       "latitude": 36.7184,
       "longitude": -4.4201
@@ -48,7 +48,7 @@
     {
       "title": "Bache profundo en calzada",
       "description": "Existe un bache importante frente al número 14 que supone un riesgo alto para motocicletas y ciclistas.",
-      "category": "CALZADA",
+      "category": "STREET",
       "status": "REPORTED",
       "latitude": 36.7201,
       "longitude": -4.4214
@@ -56,7 +56,7 @@
     {
       "title": "Farola fundida en parque infantil",
       "description": "La luminaria principal junto a la zona de juegos no enciende al anochecer, dejando el parque a oscuras.",
-      "category": "ILUMINACION",
+      "category": "LIGHTING",
       "status": "ASSIGNED",
       "latitude": 36.7160,
       "longitude": -4.4702
@@ -64,7 +64,7 @@
     {
       "title": "Acera levantada por raíces de árbol",
       "description": "Varias losetas del pavimento se encuentran levantadas por el crecimiento de las raíces en la acera derecha.",
-      "category": "CALZADA",
+      "category": "STREET",
       "status": "IN_PROGRESS",
       "latitude": 36.7032,
       "longitude": -4.4371
@@ -72,7 +72,7 @@
     {
       "title": "Banco de madera roto y astillado",
       "description": "El banco ubicado frente a la fuente tiene dos listones rotos y presenta astillas peligrosas para los transeúntes.",
-      "category": "MOBILIARIO",
+      "category": "STREET",
       "status": "RESOLVED",
       "latitude": 36.7248,
       "longitude": -4.4178
@@ -80,7 +80,7 @@
     {
       "title": "Contenedor de reciclaje con cierre averiado",
       "description": "La tapa superior del contenedor de papel se ha quedado trabada y no permite el depósito de residuos.",
-      "category": "LIMPIEZA",
+      "category": "CLEANING",
       "status": "REPORTED",
       "latitude": 36.7225,
       "longitude": -4.4330
@@ -88,7 +88,7 @@
     {
       "title": "Papelera arrancada de su anclaje",
       "description": "Una papelera metálica ha sido arrancada de la pared y se encuentra volcada en mitad de la vía peatonal.",
-      "category": "MOBILIARIO",
+      "category": "STREET",
       "status": "VALIDATED",
       "latitude": 36.7155,
       "longitude": -4.4220
@@ -96,7 +96,7 @@
     {
       "title": "Rama grande con riesgo de caída",
       "description": "Una rama de gran tamaño está parcialmente rota tras el viento de ayer y cuelga sobre el paso de peatones.",
-      "category": "JARDINERIA",
+      "category": "GREEN_AREAS",
       "status": "ASSIGNED",
       "latitude": 36.7220,
       "longitude": -4.3800
@@ -104,7 +104,7 @@
     {
       "title": "Falta señal de dirección obligatoria",
       "description": "La señal vertical de giro obligatorio ha sido golpeada y no se divisa correctamente al incorporarse a la vía.",
-      "category": "SEÑALIZACION",
+      "category": "STREET",
       "status": "IN_PROGRESS",
       "latitude": 36.7145,
       "longitude": -4.4289
@@ -112,7 +112,7 @@
     {
       "title": "Pinta en fachada de edificio protegido",
       "description": "Graffiti de gran dimensión realizado sobre la pared lateral exterior de la biblioteca pública.",
-      "category": "LIMPIEZA",
+      "category": "STREET",
       "status": "CLOSED",
       "latitude": 36.7180,
       "longitude": -4.4100
