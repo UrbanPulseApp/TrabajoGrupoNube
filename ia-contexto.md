@@ -1,27 +1,21 @@
 # Contexto del Proyecto: UrbanPulse
 
 ## 1. Descripción y Propósito
-UrbanPulse es una plataforma cloud para la gestión inteligente de incidencias urbanas que integra reportes de la ciudadanía con datos contextuales de la ciudad de Málaga[cite: 1].
-* **Enfoque arquitectónico inicial:** Monolito sencillo en Spring Boot con base de datos relacional PostgreSQL[cite: 1]. No se introducen microservicios ni sistemas distribuidos complejos hasta que exista un problema observable y una decisión arquitectónica documentada[cite: 1, 9].
-* **Documentación técnica:** Se sigue el modelo C4 para diagramas de arquitectura (`workspace.dsl`) y Architecture Decision Records (ADRs) en `docs/adr/` para justificar decisiones clave[cite: 2, 9].
+UrbanPulse es una plataforma cloud para la gestión inteligente de incidencias urbanas que integra reportes de la ciudadanía con datos contextuales de la ciudad de Málaga.
+* **Arquitectura:** Monolito en Spring Boot (backend) + React con Vite (frontend) + PostgreSQL.
+* **Documentación técnica:** Modelo C4 (`docs/workspace.dsl`) y ADRs en `docs/adr/`.
 
-## 2. Dominio y Ciclo de Vida
-* **Entidad central:** `Incident` (descripción, categoría, localización, marcas temporales, estado)[cite: 1, 4].
-* **Estados del ciclo de vida:** `REPORTED`, `VALIDATED`, `REJECTED`, `ASSIGNED`, `IN_PROGRESS`, `RESOLVED`, `REOPENED`, `CLOSED`[cite: 5].
-* **Entidades auxiliares:** `User` (roles: Ciudadano, Operador, Técnico, Admin, Analista)[cite: 2, 4], `Assignment` (asignación a departamentos/técnicos)[cite: 4], `Attachment` (evidencias multimedia fuera de la base relacional)[cite: 4], `UrbanAsset` (activos urbanos como semáforos o paradas)[cite: 4], `UrbanContext` (tráfico, clima, barrio y distrito)[cite: 4].
-* **Regla de degradación controlada:** Las fuentes externas enriquecen la información, pero su caída o indisponibilidad jamás debe impedir registrar una incidencia en base de datos[cite: 2, 4].
+## 2. Dominio y Seguridad
+* **Identificadores Opacos (UUID):** Claves primarias (`User`, `Incident`, `Assignment`, `Attachment`, `StatusChange`) en `UUID` para evitar vulnerabilidades IDOR.
+* **Entidad central:** `Incident` con ciclo de vida: `REPORTED`, `VALIDATED`, `REJECTED`, `ASSIGNED`, `IN_PROGRESS`, `RESOLVED`, `REOPENED`, `CLOSED`.
+* **Degradación Controlada:** Si las fuentes externas (clima, activos, tráfico) no responden, la incidencia se registra con datos de reserva (*fallback*).
 
-## 3. Normas de Diseño de la API REST
-* **Estrategia Design-First:** Se definen los contratos y DTOs antes de implementar la lógica[cite: 10].
-* **Rutas centradas en recursos:** Uso de sustantivos en plural (`/api/incidents`, `/api/users`), nunca verbos en la URL[cite: 10].
-* **Parámetros de consulta:** Filtrado múltiple (estado, prioridad, categoría, distrito), paginación (`page`, `size`) y ordenación (`sort`) combinados en `GET /api/incidents` mediante *query parameters*[cite: 10, 11].
-* **Modificación parcial:** Empleo de `PATCH` para transiciones de estado y modificaciones puntuales[cite: 10, 11].
-* **DTOs obligatorios:** Separación estricta entre entidades de persistencia (JPA) y objetos de transferencia para peticiones y respuestas[cite: 10, 11].
+## 3. API REST y Endpoints Clave
+* **Design-First y DTOs:** Uso obligatorio de DTOs para aislar la base de datos de la interfaz.
+* **Prevención de Duplicados:** Endpoint `GET /api/incidents/duplicates` por radio métrico y *bounding box*.
+* **Cuadro de Mando:** Endpoint `GET /api/analytics/summary` restringido a roles `ANALYST`, `OPERATOR` y `ADMIN`.
+* **Errores Estandarizados:** Uso de `@RestControllerAdvice` con DTO `ApiError` y cabecera de trazabilidad `X-Request-ID`.
 
-## 4. Gestión de Excepciones y Errores
-Todos los errores de la API devuelven una estructura unificada basada en una clase `ApiError` con los campos: `type`, `title`, `status` (código HTTP), `code` (código interno de negocio), `detail`, `instance`, `requestId` (UUID de trazabilidad) y `errors` (lista de `FieldError`)[cite: 11]. Nunca se exponen trazas o excepciones internas del servidor al cliente[cite: 11].
-
-## 5. Instrucciones para la IA
-* Genera código en Java con Spring Boot limpio y estructurado en capas (`controller`, `service`, `repository`, `domain`, `dto`, `exception`).
-* Prioriza la simplicidad (*Keep It Simple*): no propongas Kafka, Kubernetes o microservicios a menos que se soliciten explícitamente[cite: 1, 2].
-* Asegura que el manejo de errores utilice `@RestControllerAdvice` y respete el contrato de `ApiError`[cite: 11].
+## 4. Instrucciones para la IA
+* Respeta la arquitectura por capas (`controller`, `service`, `repository`, `entity`, `dto`, `exception`).
+* No introduzcas microservicios ni herramientas complejas innecesarias (*Keep It Simple*).
