@@ -1,8 +1,10 @@
 package com.urbanpulse.config;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urbanpulse.entity.Incident;
 import com.urbanpulse.entity.UrbanAsset;
@@ -12,6 +14,7 @@ import com.urbanpulse.enums.Role;
 import com.urbanpulse.repository.IncidentRepository;
 import com.urbanpulse.repository.UrbanAssetRepository;
 import com.urbanpulse.repository.UserRepository;
+import com.urbanpulse.service.OpenDataIncidentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -19,8 +22,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.InputStream;
 
 @Component
 public class DatabaseDataLoader implements CommandLineRunner {
@@ -30,16 +31,19 @@ public class DatabaseDataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final IncidentRepository incidentRepository;
     private final UrbanAssetRepository urbanAssetRepository;
-    private final ObjectMapper objectMapper;
+    private final OpenDataIncidentService openDataIncidentService;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
     public DatabaseDataLoader(UserRepository userRepository,
                               IncidentRepository incidentRepository,
                               UrbanAssetRepository urbanAssetRepository,
+                              OpenDataIncidentService openDataIncidentService,
                               PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.incidentRepository = incidentRepository;
         this.urbanAssetRepository = urbanAssetRepository;
+        this.openDataIncidentService = openDataIncidentService;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = new ObjectMapper();
     }
@@ -47,14 +51,30 @@ public class DatabaseDataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        // 1. Cargar activos urbanos de referencia (Semáforos, paradas EMT, etc.)
         loadUrbanAssetsIfEmpty();
 
-        // Evita duplicar datos si la base de datos ya contiene registros
-        if (userRepository.count() > 0 || incidentRepository.count() > 0) {
-            log.info("Base de datos ya inicializada. Se omite la carga del dataset JSON.");
-            return;
+        // 2. Cargar datos base de usuarios e incidencias iniciales desde initial-data.json
+        if (userRepository.count() == 0) {
+            loadInitialJsonData();
+        } else {
+            log.info("Usuarios ya inicializados. Se omite la carga de initial-data.json.");
         }
 
+        // 3. Carga masiva de incidencias GECOR (2026) desde archivos CSV para pruebas de carga
+        if (incidentRepository.count() < 50) {
+            log.info("Iniciando sembrado masivo de incidencias GECOR (2026) desde archivos CSV locales...");
+            List<Incident> gecorIncidents = openDataIncidentService.loadIncidentsAsEntities();
+            if (!gecorIncidents.isEmpty()) {
+                incidentRepository.saveAll(gecorIncidents);
+                log.info("Insertadas exitosamente {} incidencias GECOR en la base de datos.", gecorIncidents.size());
+            }
+        } else {
+            log.info("La base de datos ya contiene un volumen suficiente de incidencias ({})", incidentRepository.count());
+        }
+    }
+
+    private void loadInitialJsonData() {
         log.info("Iniciando la carga de datos de prueba desde initial-data.json...");
 
         ClassPathResource resource = new ClassPathResource("data/initial-data.json");
@@ -66,7 +86,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
         try (InputStream inputStream = resource.getInputStream()) {
             InitialDataDTO data = objectMapper.readValue(inputStream, InitialDataDTO.class);
 
-            // 1. Cargar Usuarios
+            // Cargar Usuarios
             if (data.getUsers() != null && !data.getUsers().isEmpty()) {
                 for (UserSeedDTO userDTO : data.getUsers()) {
                     User user = new User();
@@ -75,13 +95,13 @@ public class DatabaseDataLoader implements CommandLineRunner {
                     user.setRole(Role.valueOf(userDTO.getRole()));
                     user.setActive(userDTO.isActive());
                     user.setCreatedAt(LocalDateTime.now());
-                    user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+                    user.setPassword(passwordEncoder.encode(userDTO.getPassword() != null ? userDTO.getPassword() : "password123"));
                     userRepository.save(user);
                 }
                 log.info("Cargados {} usuarios en la base de datos.", data.getUsers().size());
             }
 
-            // 2. Cargar Incidencias
+            // Cargar Incidencias del JSON
             if (data.getIncidents() != null && !data.getIncidents().isEmpty()) {
                 for (IncidentSeedDTO incDTO : data.getIncidents()) {
                     Incident incident = new Incident();
@@ -97,7 +117,7 @@ public class DatabaseDataLoader implements CommandLineRunner {
                 log.info("Cargadas {} incidencias iniciales en la zona de Málaga.", data.getIncidents().size());
             }
 
-            log.info("Inicialización de datos completada con éxito.");
+            log.info("Inicialización de datos de initial-data.json completada con éxito.");
         } catch (Exception e) {
             log.error("Error durante el procesamiento e inserción del dataset JSON:", e);
         }

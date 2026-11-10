@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/opendata/incidents")
 public class OpenDataIncidentController {
+
     private final OpenDataIncidentService openDataIncidentService;
 
     public OpenDataIncidentController(OpenDataIncidentService openDataIncidentService) {
