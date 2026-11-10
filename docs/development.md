@@ -83,6 +83,8 @@ npm run dev
 
 La página de acceso está en `http://localhost:5173/login`. El inicio de sesión se conserva en una **cookie de sesión `HttpOnly`**; las peticiones de escritura incluyen **protección CSRF**. Vite reenvía `/api` a `http://localhost:8080`.
 
+El mapa histórico consulta los CSV de GECOR desde el backend, así que el backend necesita conexión a Internet. Por defecto carga los conjuntos anuales desde 2020; cambia `URBANPULSE_GECOR_FIRST_YEAR` para ampliar o reducir el periodo. Si un conjunto anual no está publicado o no responde, la API lo señala y muestra los años disponibles.
+
 Otros comandos disponibles en el frontend (definidos como scripts en `package.json`):
 
 | Comando | Descripción |

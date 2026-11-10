@@ -76,6 +76,14 @@ export async function getAnalyticsSummary() {
     return response.json();
 }
 
+export async function getOpenDataIncidents(signal) {
+    const response = await apiFetch("/api/opendata/incidents", { signal });
+    if (!response.ok) {
+        throw await responseError(response, "No se pudo cargar el conjunto de Open Data Málaga");
+    }
+    return response.json();
+}
+
 export async function uploadIncidentAttachment(incidentId, file) {
     const formData = new FormData();
     formData.append("file", file);

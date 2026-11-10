@@ -28,6 +28,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(OpenDataUnavailableException.class)
+    public ResponseEntity<ApiError> handleOpenDataUnavailable(OpenDataUnavailableException ex,
+                                                              HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "OPEN_DATA_UNAVAILABLE", "Open data unavailable",
+                ex.getMessage(), request, null);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
