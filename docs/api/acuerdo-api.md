@@ -66,6 +66,14 @@ Ejemplo de duplicados: `GET /api/incidents/duplicates?latitude=36.7185&longitude
 
 El `PATCH` recibe `{"status":"VALIDATED","reason":"Datos suficientes"}`. `reason` es obligatorio para `REJECTED`. Transiciones admitidas: `REPORTED → VALIDATED/REJECTED`, `VALIDATED → ASSIGNED/REJECTED`, `ASSIGNED → IN_PROGRESS/VALIDATED`, `IN_PROGRESS → RESOLVED`, `RESOLVED → CLOSED/REOPENED` y `REOPENED → ASSIGNED/IN_PROGRESS`.
 
+### Histórico de Open Data Málaga (`/api/opendata/incidents`)
+
+| Método y ruta | Acceso | Función |
+|---|---|---|
+| `GET /api/opendata/incidents` | Público | Devuelve expedientes GECOR resueltos con coordenadas válidas, años cargados, años no disponibles y fecha de consulta. |
+
+La API consulta los CSV anuales publicados por el [Ayuntamiento de Málaga](https://datosabiertos.malaga.eu/dataset/incidencias-resueltas-en-la-via-publica-para-el-ano-2026). Por defecto incluye desde 2020 hasta el año actual; `URBANPULSE_GECOR_FIRST_YEAR` permite cambiar el periodo. Los datos se guardan en caché durante 12 horas y no se insertan en las tablas operativas de UrbanPulse. La respuesta se limita a 25.000 puntos, priorizando los más recientes. Atribución: Ayuntamiento de Málaga, Open Data Málaga, conjunto GECOR, licencia CC BY 4.0.
+
 ## 5. Contexto urbano y activos físicos
 
 El contexto urbano se captura de forma automática al crear una incidencia y se consulta mediante `GET /api/incidents/{id}/context`. El contrato aplica **degradación controlada**: si una fuente externa falla, el registro y la consulta nunca se bloquean; los campos no disponibles toman valores de fallback.

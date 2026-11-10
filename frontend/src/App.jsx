@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import IncidentForm from "./components/IncidentForm.jsx";
 import IncidentBoard from "./components/IncidentBoard.jsx";
 import AnalyticsDashboard from "./components/AnalyticsDashboard.jsx";
+import OpenDataIncidentsMap from "./components/OpenDataIncidentsMap.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import { getCurrentUser, logout } from "./services/AuthService.js";
 import "./app-auth.css";
@@ -29,6 +30,7 @@ function Header({ currentUser, onNavigate, onLogout }) {
       <nav className="header-nav" aria-label="Navegación principal">
         <a className="nav-link active" href="#reportar">Reportar incidencia</a>
         <a className="nav-link" href="#incidencias">Seguimiento</a>
+        <a className="nav-link" href="#mapa-incidencias">Mapa</a>
         <a className="nav-link" href="#como-funciona">Cómo funciona</a>
         {canViewAnalytics && <a className="nav-link" href="#analitica">Analítica</a>}
       </nav>
@@ -119,6 +121,7 @@ function App() {
       <main>
         <Intro />
         <Steps />
+        <OpenDataIncidentsMap />
         <IncidentBoard refreshKey={boardRefresh} currentUser={currentUser} onChanged={() => setBoardRefresh((value) => value + 1)} />
 
         {/* Panel de Analítica Territorial para Operadores / Administradores / Analistas */}

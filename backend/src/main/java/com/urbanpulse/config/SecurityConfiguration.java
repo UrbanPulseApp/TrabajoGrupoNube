@@ -92,6 +92,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                         "/api/incidents/*/context",
                         "/api/incidents/*/status-changes",
                         "/api/incidents/*/attachments", "/api/incidents/*/attachments/*").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/opendata/incidents").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/incidents").hasAnyRole("CITIZEN", "OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/incidents/*/attachments").hasAnyRole("CITIZEN", "OPERATOR", "ADMIN")
                 .antMatchers(HttpMethod.PATCH, "/api/incidents/*").hasAnyRole("OPERATOR", "ADMIN")
