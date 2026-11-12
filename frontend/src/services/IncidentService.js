@@ -22,14 +22,6 @@ export async function createIncident(incident) {
     return response.json();
 }
 
-export async function getIncident(id) {
-    const response = await apiFetch(`${API_URL}/${id}`);
-    if (!response.ok) {
-        throw await responseError(response, "No se ha podido obtener la incidencia");
-    }
-    return response.json();
-}
-
 export async function getIncidents(filters = {}, signal) {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -40,21 +32,6 @@ export async function getIncidents(filters = {}, signal) {
         throw await responseError(response, "No se pudo cargar el listado de incidencias");
     }
 
-    return response.json();
-}
-
-export async function getMapIncidents(bounds, signal) {
-    const params = new URLSearchParams({
-        minLatitude: bounds.getSouth().toFixed(6),
-        maxLatitude: bounds.getNorth().toFixed(6),
-        minLongitude: bounds.getWest().toFixed(6),
-        maxLongitude: bounds.getEast().toFixed(6),
-        limit: "5000",
-    });
-    const response = await apiFetch(`${API_URL}/map?${params.toString()}`, { signal });
-    if (!response.ok) {
-        throw await responseError(response, "No se pudieron cargar las incidencias del mapa");
-    }
     return response.json();
 }
 

@@ -5,7 +5,6 @@ import AnalyticsDashboard from "./components/AnalyticsDashboard.jsx";
 import OpenDataIncidentsMap from "./components/OpenDataIncidentsMap.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import { getCurrentUser, logout } from "./services/AuthService.js";
-import "./app-auth.css";
 
 function BrandMark() {
   return (
