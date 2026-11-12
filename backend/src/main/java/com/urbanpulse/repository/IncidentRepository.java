@@ -2,7 +2,6 @@ package com.urbanpulse.repository;
 
 import com.urbanpulse.entity.Incident;
 import com.urbanpulse.dto.MapIncidentResponse;
-import com.urbanpulse.enums.IncidentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -23,8 +22,6 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID>, JpaSp
                                          @Param("minLongitude") Double minLongitude,
                                          @Param("maxLongitude") Double maxLongitude,
                                          Pageable pageable);
-
-    long countByStatus(IncidentStatus status);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 

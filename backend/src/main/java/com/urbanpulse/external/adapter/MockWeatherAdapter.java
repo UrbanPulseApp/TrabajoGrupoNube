@@ -13,49 +13,32 @@ public class MockWeatherAdapter implements WeatherService {
 
     @Override
     public String getWeatherSummary(Double latitude, Double longitude) {
-        try {
-            if (latitude == null || longitude == null) {
-                return "Clima no disponible (degradación controlada)";
-            }
-            return "22°C, Parcialmente nublado, Humedad 65%";
-        } catch (Exception e) {
-            return "Servicio meteorológico no disponible (degradación controlada)";
+        if (latitude == null || longitude == null) {
+            return "Clima no disponible (degradación controlada)";
         }
+        return "22°C, Parcialmente nublado, Humedad 65%";
     }
 
     @Override
     public List<ExternalObservation> getObservations(Double latitude, Double longitude) {
         List<ExternalObservation> observations = new ArrayList<>();
-
-        try {
-            if (latitude == null || longitude == null) {
-                return observations;
-            }
-            ExternalObservation temp = new ExternalObservation();
-            temp.setSource("AEMET_MOCK");
-            temp.setMetricName("TEMPERATURE");
-            temp.setUnit("CELSIUS");
-            temp.setValue(22.5);
-            temp.setQualityScore(0.98);
-            temp.setObservationTimestamp(LocalDateTime.now());
-            temp.setIngestionTimestamp(LocalDateTime.now());
-            observations.add(temp);
-
-
-            ExternalObservation humidity = new ExternalObservation();
-            humidity.setSource("AEMET_MOCK");
-            humidity.setMetricName("HUMIDITY");
-            humidity.setUnit("PERCENTAGE");
-            humidity.setValue(65.0);
-            humidity.setQualityScore(0.95);
-            humidity.setObservationTimestamp(LocalDateTime.now());
-            humidity.setIngestionTimestamp(LocalDateTime.now());
-            observations.add(humidity);
-
-        } catch (Exception e) {
-
+        if (latitude == null || longitude == null) {
+            return observations;
         }
-
+        observations.add(observation("TEMPERATURE", "CELSIUS", 22.5, 0.98));
+        observations.add(observation("HUMIDITY", "PERCENTAGE", 65.0, 0.95));
         return observations;
+    }
+
+    private ExternalObservation observation(String metric, String unit, double value, double quality) {
+        ExternalObservation obs = new ExternalObservation();
+        obs.setSource("AEMET_MOCK");
+        obs.setMetricName(metric);
+        obs.setUnit(unit);
+        obs.setValue(value);
+        obs.setQualityScore(quality);
+        obs.setObservationTimestamp(LocalDateTime.now());
+        obs.setIngestionTimestamp(LocalDateTime.now());
+        return obs;
     }
 }

@@ -173,52 +173,6 @@ public class OpenDataIncidentService {
         return incident;
     }
 
-    private Incident mapCsvLineToIncident(String[] columns) {
-        try {
-            if (columns.length < 1) return null;
-
-            // Si la línea venía pegada por comas dentro de columns[0], intentamos re-separarla
-            String rawFirstCol = columns[0];
-            if (columns.length == 1 || (rawFirstCol.contains(",") && rawFirstCol.length() > 100)) {
-                columns = rawFirstCol.split(",", -1);
-            }
-
-            String title = cleanValue(columns[0]);
-            String description = columns.length > 1 ? cleanValue(columns[1]) : "";
-            String category = columns.length > 2 ? cleanValue(columns[2]) : "GENERAL";
-
-            if (title.isBlank() && description.isBlank()) return null;
-
-            Incident incident = new Incident();
-
-            // Truncar defensivamente el título a un máximo de 255 caracteres para PostgreSQL
-            String safeTitle = title.length() > 255 ? title.substring(0, 255) : title;
-            incident.setTitle(safeTitle.isEmpty() ? "Incidencia GECOR 2026" : safeTitle);
-
-            incident.setDescription(description);
-            incident.setCategory(category.length() > 100 ? category.substring(0, 100) : category);
-
-            // Coordenadas
-            Double lat = 36.7213;
-            Double lon = -4.4214;
-            if (columns.length > 4 && !columns[3].isBlank() && !columns[4].isBlank()) {
-                try {
-                    lat = Double.parseDouble(cleanValue(columns[3]).replace(",", "."));
-                    lon = Double.parseDouble(cleanValue(columns[4]).replace(",", "."));
-                } catch (NumberFormatException ignored) {}
-            }
-
-            incident.setLatitude(lat);
-            incident.setLongitude(lon);
-            incident.setStatus(IncidentStatus.VALIDATED);
-            incident.setCreatedAt(LocalDateTime.now());
-
-            return incident;
-        } catch (Exception e) {
-            return null; // Si una fila específica falla, se ignora de forma segura sin detener el arranque
-        }
-    }
-
     private String cleanValue(String text) {
         return text != null ? text.trim() : "";
     }
