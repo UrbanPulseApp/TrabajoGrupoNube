@@ -83,7 +83,7 @@ npm run dev
 
 La página de acceso está en `http://localhost:5173/login`. El inicio de sesión se conserva en una **cookie de sesión `HttpOnly`**; las peticiones de escritura incluyen **protección CSRF**. Vite reenvía `/api` a `http://localhost:8080`.
 
-El mapa histórico consulta los CSV de GECOR desde el backend, así que el backend necesita conexión a Internet. Por defecto carga los conjuntos anuales desde 2020; cambia `URBANPULSE_GECOR_FIRST_YEAR` para ampliar o reducir el periodo. Si un conjunto anual no está publicado o no responde, la API lo señala y muestra los años disponibles.
+El mapa histórico lee el CSV de GECOR incluido en `backend/src/main/resources/data/gecor/`, por lo que no necesita conexión a Internet ni configuración adicional.
 
 Otros comandos disponibles en el frontend (definidos como scripts en `package.json`):
 
@@ -112,43 +112,7 @@ mvn clean verify
 
 ## 4. Flujo de trabajo con Git
 
-No se trabaja directamente sobre `main`: `main` debe permanecer siempre estable y compilable. Cada tarea se desarrolla en una rama efímera creada desde `main`.
-
-### 4.1. Crear una rama
-
-```bash
-git switch main
-git pull
-git switch -c feature/nombre-funcionalidad
-```
-
-Tipos de rama habituales:
-
-| Tipo | Uso |
-|---|---|
-| `feature/...` | Nueva funcionalidad |
-| `fix/...` | Corrección de bug |
-| `docs/...` | Cambios de documentación |
-| `refactor/...` | Refactorización sin cambio funcional |
-| `test/...` | Pruebas |
-| `chore/...` | Mantenimiento o configuración |
-
-### 4.2. Commits (Conventional Commits)
-
-```bash
-git add .
-git commit -m "feat: add incident search filters"
-```
-
-Tipos habituales: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `style`. Los mensajes deben ser pequeños, claros y con una única finalidad.
-
-### 4.3. Subir la rama y abrir un Pull Request
-
-```bash
-git push -u origin feature/nombre-funcionalidad
-```
-
-Después, abre un **Pull Request** hacia `main` y solicita revisión. Ver la guía completa en **[CONTRIBUTING.md](../CONTRIBUTING.md)**.
+El flujo (ramas efímeras desde `main`, Conventional Commits y Pull Request con revisión) está descrito en **[CONTRIBUTING.md](../CONTRIBUTING.md)**.
 
 ---
 

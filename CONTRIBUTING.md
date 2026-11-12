@@ -7,12 +7,14 @@
    * `feature/nombre-funcionalidad`
    * `fix/descripcion-error`
    * `docs/nombre-documento`
+   * `refactor/descripcion-cambio`
    * `chore/mantenimiento-configuracion`
 3. Usar **Conventional Commits** para los mensajes de commit:
    * `feat:` para nuevas funcionalidades
    * `fix:` para solución de errores
    * `docs:` para cambios en la documentación
    * `refactor:` para mejoras de código sin cambio funcional
+   * `ci:` / `build:` para integración continua o empaquetado
    * `test:` para añadir o modificar pruebas
    * `chore:` para dependencias o tareas de build
 4. Abrir un **Pull Request** hacia `main` y solicitar la revisión de al menos un compañero antes de fusionar.

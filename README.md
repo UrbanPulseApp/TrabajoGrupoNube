@@ -33,7 +33,7 @@ La arquitectura parte de un **monolito sencillo** y solo se incorporarán nuevos
 
 - **Gestión de incidencias**: creación, consulta y seguimiento completo del ciclo de vida, modelado como una **máquina de estados** (`REPORTED → VALIDATED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED`, con `REJECTED` y `REOPENED`), con historial auditado de transiciones.
 - **Geolocalización**: ubicación de avisos en mapa con coordenadas, barrio y distrito.
-- **Mapa histórico de Málaga**: visualiza incidencias municipales resueltas publicadas por GECOR en Open Data Málaga (desde 2020 por defecto), con filtros por año, categoría y texto.
+- **Mapa histórico de Málaga**: visualiza incidencias municipales resueltas publicadas por GECOR en Open Data Málaga (conjunto 2026, servido desde un CSV local del backend), con filtros por año, categoría y texto.
 - **Búsqueda, filtros, ordenación y paginación**: por estado, categoría, texto libre y rango de fechas, con paginación en servidor para evitar sobrecargar el cliente.
 - **Detección de duplicados**: identificación de posibles incidencias repetidas por proximidad geográfica y categoría.
 - **Evidencias**: carga y descarga de imágenes y documentos (JPG/PNG/WEBP/PDF, hasta 10 MB y 4 por incidencia), almacenados fuera de la base de datos relacional.

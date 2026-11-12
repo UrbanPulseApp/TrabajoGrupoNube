@@ -25,11 +25,14 @@ Para usar otra URL de API, crea un archivo `.env.local` en esta carpeta con `VIT
 - `src/App.jsx`: composición de la página y navegación.
 - `src/components/IncidentForm.jsx`: formulario, selección de evidencias y envío de reportes.
 - `src/components/IncidentBoard.jsx`: listado público paginado, búsqueda, filtros, historial y descarga de evidencias.
+- `src/components/IncidentOperations.jsx`: cambio de estado y asignaciones de una incidencia (operadores y técnicos).
+- `src/components/AnalyticsDashboard.jsx`: indicadores y métricas territoriales (`/api/analytics/summary`).
+- `src/components/OpenDataIncidentsMap.jsx`: mapa histórico de incidencias resueltas de GECOR (`/api/opendata/incidents`).
 - `src/components/IncidentMap.jsx`: selección de coordenadas en el mapa de Málaga.
 - `src/services/IncidentService.js`: comunicación con la API de incidencias y adjuntos.
 - `src/services/AuthService.js`: inicio/cierre de sesión, consulta de la sesión actual y registro ciudadano.
 - `src/services/ApiClient.js`: credenciales de sesión y token CSRF para peticiones de escritura.
 - `src/pages/LoginPage.jsx`: página separada de acceso y creación de cuenta ciudadana.
-- `src/styles.css`: estilos y adaptación a pantallas pequeñas.
+- `src/styles.css`: estilos globales, de la sesión y adaptación a pantallas pequeñas. Cada componente tiene además su propio `.css`.
 
 El formulario admite hasta 4 evidencias por incidencia (JPG, PNG, WEBP o PDF, 10 MB máximo por archivo). Los adjuntos deben almacenarse en un directorio persistente configurado con `ATTACHMENTS_DIRECTORY` al desplegar el backend.
