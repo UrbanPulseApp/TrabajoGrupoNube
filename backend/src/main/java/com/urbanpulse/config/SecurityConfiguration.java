@@ -88,6 +88,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/auth/csrf", "/api/auth/login", "/api/users/**").permitAll()
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/incidents", "/api/incidents/*",
+                        "/api/incidents/map",
                         "/api/incidents/duplicates",
                         "/api/incidents/*/context",
                         "/api/incidents/*/status-changes",

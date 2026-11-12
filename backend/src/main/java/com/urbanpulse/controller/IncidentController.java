@@ -2,6 +2,7 @@ package com.urbanpulse.controller;
 
 import com.urbanpulse.dto.CreateIncidentRequest;
 import com.urbanpulse.dto.IncidentResponse;
+import com.urbanpulse.dto.MapIncidentResponse;
 import com.urbanpulse.dto.StatusChangeResponse;
 import com.urbanpulse.dto.UpdateIncidentStatusRequest;
 import com.urbanpulse.dto.UrbanContextResponse;
@@ -52,6 +53,24 @@ public class IncidentController {
         if (page < 0) throw new IllegalArgumentException("page debe ser mayor o igual que 0");
         if (size < 1 || size > 100) throw new IllegalArgumentException("size debe estar entre 1 y 100");
         return ResponseEntity.ok(incidentService.search(status, category, query, from, to, page, size, sort));
+    }
+
+    @GetMapping("/map")
+    public ResponseEntity<List<MapIncidentResponse>> mapIncidents(
+            @RequestParam double minLatitude,
+            @RequestParam double maxLatitude,
+            @RequestParam double minLongitude,
+            @RequestParam double maxLongitude,
+            @RequestParam(defaultValue = "5000") int limit) {
+        if (minLatitude < -90 || maxLatitude > 90 || minLatitude > maxLatitude
+                || minLongitude < -180 || maxLongitude > 180 || minLongitude > maxLongitude) {
+            throw new IllegalArgumentException("Los límites geográficos no son válidos");
+        }
+        if (limit < 1 || limit > 5000) {
+            throw new IllegalArgumentException("limit debe estar entre 1 y 5000");
+        }
+        return ResponseEntity.ok(incidentService.findForMap(
+                minLatitude, maxLatitude, minLongitude, maxLongitude, limit));
     }
 
     @GetMapping("/duplicates")

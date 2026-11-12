@@ -39,6 +39,22 @@ export async function getIncidents(filters = {}, signal) {
     if (!response.ok) {
         throw await responseError(response, "No se pudo cargar el listado de incidencias");
     }
+
+    return response.json();
+}
+
+export async function getMapIncidents(bounds, signal) {
+    const params = new URLSearchParams({
+        minLatitude: bounds.getSouth().toFixed(6),
+        maxLatitude: bounds.getNorth().toFixed(6),
+        minLongitude: bounds.getWest().toFixed(6),
+        maxLongitude: bounds.getEast().toFixed(6),
+        limit: "5000",
+    });
+    const response = await apiFetch(`${API_URL}/map?${params.toString()}`, { signal });
+    if (!response.ok) {
+        throw await responseError(response, "No se pudieron cargar las incidencias del mapa");
+    }
     return response.json();
 }
 
