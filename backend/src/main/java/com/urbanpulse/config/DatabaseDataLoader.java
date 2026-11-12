@@ -3,11 +3,7 @@ package com.urbanpulse.config;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urbanpulse.entity.Incident;
@@ -18,7 +14,6 @@ import com.urbanpulse.enums.Role;
 import com.urbanpulse.repository.IncidentRepository;
 import com.urbanpulse.repository.UrbanAssetRepository;
 import com.urbanpulse.repository.UserRepository;
-import com.urbanpulse.service.OpenDataIncidentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -35,19 +30,16 @@ public class DatabaseDataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final IncidentRepository incidentRepository;
     private final UrbanAssetRepository urbanAssetRepository;
-    private final OpenDataIncidentService openDataIncidentService;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
     public DatabaseDataLoader(UserRepository userRepository,
                               IncidentRepository incidentRepository,
                               UrbanAssetRepository urbanAssetRepository,
-                              OpenDataIncidentService openDataIncidentService,
                               PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.incidentRepository = incidentRepository;
         this.urbanAssetRepository = urbanAssetRepository;
-        this.openDataIncidentService = openDataIncidentService;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = new ObjectMapper();
     }
@@ -64,53 +56,6 @@ public class DatabaseDataLoader implements CommandLineRunner {
         } else {
             log.info("Usuarios ya inicializados. Se omite la carga de initial-data.json.");
         }
-
-        // 3. Siembra y reconciliación de incidencias GECOR desde el CSV local.
-        synchronizeGecorIncidents();
-    }
-
-    private void synchronizeGecorIncidents() {
-        List<Incident> csvIncidents = openDataIncidentService.loadIncidentsAsEntities();
-        if (csvIncidents.isEmpty()) {
-            log.warn("No se han encontrado incidencias GECOR para sincronizar.");
-            return;
-        }
-
-        List<String> titles = csvIncidents.stream()
-                .map(Incident::getTitle)
-                .collect(Collectors.toList());
-        Map<String, List<Incident>> existingByTitle = incidentRepository.findByTitleIn(titles)
-                .stream()
-                .collect(Collectors.groupingBy(Incident::getTitle, HashMap::new, Collectors.toList()));
-        Map<String, Integer> occurrenceByTitle = new HashMap<>();
-        List<Incident> synchronizedIncidents = new ArrayList<>();
-
-        int inserted = 0;
-        int updated = 0;
-        for (Incident csvIncident : csvIncidents) {
-            String title = csvIncident.getTitle();
-            int occurrence = occurrenceByTitle.getOrDefault(title, 0);
-            List<Incident> existing = existingByTitle.getOrDefault(title, List.of());
-            Incident persisted = occurrence < existing.size() ? existing.get(occurrence) : null;
-            occurrenceByTitle.put(title, occurrence + 1);
-
-            if (persisted == null) {
-                persisted = csvIncident;
-                inserted++;
-            } else {
-                persisted.setDescription(csvIncident.getDescription());
-                persisted.setCategory(csvIncident.getCategory());
-                persisted.setLatitude(csvIncident.getLatitude());
-                persisted.setLongitude(csvIncident.getLongitude());
-                persisted.setStatus(csvIncident.getStatus());
-                updated++;
-            }
-            synchronizedIncidents.add(persisted);
-        }
-
-        incidentRepository.saveAll(synchronizedIncidents);
-        log.info("Sincronizadas {} incidencias GECOR: {} actualizadas y {} insertadas.",
-                csvIncidents.size(), updated, inserted);
     }
 
     private void loadInitialJsonData() {

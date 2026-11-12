@@ -25,8 +25,6 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID>, JpaSp
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
-    List<Incident> findByTitleIn(List<String> titles);
-
     @Query("SELECT i.status, COUNT(i) FROM Incident i GROUP BY i.status")
     List<Object[]> countGroupByStatus();
 

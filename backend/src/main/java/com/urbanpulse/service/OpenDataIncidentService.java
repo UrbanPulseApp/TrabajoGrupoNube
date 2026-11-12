@@ -2,8 +2,6 @@ package com.urbanpulse.service;
 
 import com.urbanpulse.dto.OpenDataIncidentResponse;
 import com.urbanpulse.dto.OpenDataIncidentsResponse;
-import com.urbanpulse.entity.Incident;
-import com.urbanpulse.enums.IncidentStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -14,13 +12,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class OpenDataIncidentService {
@@ -103,17 +99,6 @@ public class OpenDataIncidentService {
         return incidents;
     }
 
-    /**
-     * Método auxiliar para transformar el dataset de DTOs a entidades JPA Incident
-     * cuando se requiere sembrar directamente en PostgreSQL mediante DatabaseDataLoader.
-     */
-    public List<Incident> loadIncidentsAsEntities() {
-        OpenDataIncidentsResponse response = getIncidents();
-        return response.getIncidents().stream()
-                .map(this::mapDtoToEntity)
-                .collect(Collectors.toList());
-    }
-
     private OpenDataIncidentResponse mapCsvLineToDTO(String[] columns, Map<String, Integer> columnsByName,
                                                      int year, int rowCount) {
         try {
@@ -159,18 +144,6 @@ public class OpenDataIncidentService {
             log.warn("No se pudo interpretar la fila GECOR {}: {}", rowCount, e.getMessage());
             return null;
         }
-    }
-
-    private Incident mapDtoToEntity(OpenDataIncidentResponse dto) {
-        Incident incident = new Incident();
-        incident.setTitle(dto.getTitle());
-        incident.setDescription(dto.getDescription());
-        incident.setCategory(dto.getCategory());
-        incident.setLatitude(dto.getLatitude());
-        incident.setLongitude(dto.getLongitude());
-        incident.setStatus(IncidentStatus.VALIDATED);
-        incident.setCreatedAt(LocalDateTime.now());
-        return incident;
     }
 
     private String cleanValue(String text) {
