@@ -1,6 +1,6 @@
 package com.urbanpulse.external.adapter;
 
-import com.urbanpulse.external.context.ExternalObservation;
+import com.urbanpulse.entity.ExternalObservation;
 import com.urbanpulse.external.service.WeatherService;
 import org.springframework.stereotype.Service;
 

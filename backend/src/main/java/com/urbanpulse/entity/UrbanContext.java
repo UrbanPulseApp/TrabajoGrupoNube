@@ -41,6 +41,16 @@ public class UrbanContext {
     @JoinColumn(name = "urban_context_id")
     private List<ExternalObservation> observations = new ArrayList<>();
 
+    /** Contexto de reserva (degradación controlada) cuando las fuentes externas no responden. */
+    public static UrbanContext unavailable(UUID incidentId) {
+        UrbanContext context = new UrbanContext();
+        context.setIncidentId(incidentId);
+        context.setWeatherSummary("No disponible (degradación controlada)");
+        context.setTrafficStatus("No disponible (degradación controlada)");
+        context.setCapturedAt(LocalDateTime.now());
+        return context;
+    }
+
     public UUID getIncidentId() {
         return incidentId;
     }

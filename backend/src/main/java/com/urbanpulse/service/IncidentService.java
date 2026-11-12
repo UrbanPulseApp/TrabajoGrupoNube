@@ -197,15 +197,7 @@ public class IncidentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Incidencia no encontrada: " + incidentId));
 
         UrbanContext urbanContext = urbanContextRepository.findByIncidentId(incidentId)
-                .orElseGet(() -> {
-                    try {
-                        com.urbanpulse.external.context.UrbanContext external =
-                                externalContextService.getUrbanContext(incident.getLatitude(), incident.getLongitude());
-                        return urbanContextMapper.toEntity(external, incidentId);
-                    } catch (Exception e) {
-                        return urbanContextMapper.toEntity(null, incidentId);
-                    }
-                });
+                .orElseGet(() -> buildUrbanContext(incident));
 
         // Activos físicos cercanos en un radio de 100m (RF22)
         List<UrbanAssetResponse> nearbyAssets = findNearbyAssets(incident.getLatitude(), incident.getLongitude(), 100.0);
@@ -291,18 +283,24 @@ public class IncidentService {
 
     private void enrichWithUrbanContext(Incident savedIncident) {
         try {
-            com.urbanpulse.external.context.UrbanContext externalContext =
-                    externalContextService.getUrbanContext(savedIncident.getLatitude(), savedIncident.getLongitude());
-            UrbanContext urbanContextEntity = urbanContextMapper.toEntity(externalContext, savedIncident.getId());
-            urbanContextRepository.save(urbanContextEntity);
+            urbanContextRepository.save(buildUrbanContext(savedIncident));
         } catch (Exception ex) {
             // RF26: Degradación controlada - el fallo del servicio externo nunca debe impedir el guardado
             try {
-                UrbanContext fallbackEntity = urbanContextMapper.toEntity(null, savedIncident.getId());
-                urbanContextRepository.save(fallbackEntity);
+                urbanContextRepository.save(UrbanContext.unavailable(savedIncident.getId()));
             } catch (Exception ignored) {
                 // Si la persistencia de contexto fallase, la incidencia ya quedó registrada de forma segura
             }
+        }
+    }
+
+    private UrbanContext buildUrbanContext(Incident incident) {
+        try {
+            UrbanContext context = externalContextService.getUrbanContext(incident.getLatitude(), incident.getLongitude());
+            context.setIncidentId(incident.getId());
+            return context;
+        } catch (Exception e) {
+            return UrbanContext.unavailable(incident.getId());
         }
     }
 

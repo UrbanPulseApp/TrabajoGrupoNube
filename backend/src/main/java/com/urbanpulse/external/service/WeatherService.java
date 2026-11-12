@@ -1,6 +1,6 @@
 package com.urbanpulse.external.service;
 
-import com.urbanpulse.external.context.ExternalObservation;
+import com.urbanpulse.entity.ExternalObservation;
 import java.util.List;
 
 public interface WeatherService {
