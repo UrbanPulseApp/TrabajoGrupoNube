@@ -22,6 +22,31 @@ export async function createIncident(incident) {
     return response.json();
 }
 
+export async function getIncident(id, signal) {
+    const response = await apiFetch(`${API_URL}/${id}`, { signal });
+    if (response.status === 404) {
+        const notFound = new Error("No existe ninguna incidencia con ese enlace.");
+        notFound.status = 404;
+        throw notFound;
+    }
+    if (!response.ok) {
+        throw await responseError(response, "No se ha podido obtener la incidencia");
+    }
+    return response.json();
+}
+
+// Todas las incidencias con coordenadas (el backend limita a 5.000, las más recientes primero).
+export async function getMapIncidents(signal) {
+    const params = new URLSearchParams({
+        minLatitude: "-90", maxLatitude: "90", minLongitude: "-180", maxLongitude: "180", limit: "5000",
+    });
+    const response = await apiFetch(`${API_URL}/map?${params.toString()}`, { signal });
+    if (!response.ok) {
+        throw await responseError(response, "No se pudieron cargar las incidencias del mapa");
+    }
+    return response.json();
+}
+
 export async function getIncidents(filters = {}, signal) {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
