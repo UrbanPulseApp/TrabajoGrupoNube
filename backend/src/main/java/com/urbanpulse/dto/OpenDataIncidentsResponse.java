@@ -29,14 +29,19 @@ public class OpenDataIncidentsResponse {
 
     public List<OpenDataIncidentResponse> getIncidents() { return incidents; }
     public void setIncidents(List<OpenDataIncidentResponse> incidents) { this.incidents = incidents; }
+
     public List<Integer> getYearsIncluded() { return yearsIncluded; }
     public void setYearsIncluded(List<Integer> yearsIncluded) { this.yearsIncluded = yearsIncluded; }
+
     public List<Integer> getUnavailableYears() { return unavailableYears; }
     public void setUnavailableYears(List<Integer> unavailableYears) { this.unavailableYears = unavailableYears; }
+
     public Instant getLoadedAt() { return loadedAt; }
     public void setLoadedAt(Instant loadedAt) { this.loadedAt = loadedAt; }
+
     public int getTotalAvailable() { return totalAvailable; }
     public void setTotalAvailable(int totalAvailable) { this.totalAvailable = totalAvailable; }
+
     public boolean isTruncated() { return truncated; }
     public void setTruncated(boolean truncated) { this.truncated = truncated; }
 }

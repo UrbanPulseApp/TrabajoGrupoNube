@@ -3,6 +3,7 @@ package com.urbanpulse.service;
 import com.urbanpulse.dto.CreateIncidentRequest;
 import com.urbanpulse.dto.IncidentResponse;
 import com.urbanpulse.dto.LocationResponse;
+import com.urbanpulse.dto.MapIncidentResponse;
 import com.urbanpulse.dto.StatusChangeResponse;
 import com.urbanpulse.dto.UpdateIncidentStatusRequest;
 import com.urbanpulse.dto.UrbanAssetResponse;
@@ -143,6 +144,15 @@ public class IncidentService {
                     builder.lessThanOrEqualTo(root.get("createdAt"), to));
         }
         return incidentRepository.findAll(specification, pageable).map(this::mapToResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MapIncidentResponse> findForMap(double minLatitude, double maxLatitude,
+                                                double minLongitude, double maxLongitude,
+                                                int limit) {
+        return incidentRepository.findForMap(
+                minLatitude, maxLatitude, minLongitude, maxLongitude,
+                PageRequest.of(0, limit));
     }
 
     @Transactional

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import { getOpenDataIncidents } from "../services/IncidentService.js";
@@ -36,14 +36,17 @@ function IncidentLayer({ incidents }) {
 
   useEffect(() => {
     const layer = L.layerGroup().addTo(map);
+    let renderFrame = null;
     const render = () => {
+      renderFrame = null;
       layer.clearLayers();
       const zoom = map.getZoom();
       const cellSize = zoom >= 17 ? 34 : 52;
       const buckets = new Map();
+      const visibleBounds = map.getBounds().pad(0.08);
       incidents.forEach((incident) => {
         const latLng = L.latLng(incident.latitude, incident.longitude);
-        if (!map.getBounds().pad(0.08).contains(latLng)) return;
+        if (!visibleBounds.contains(latLng)) return;
         const pixel = map.project(latLng, zoom);
         const key = `${Math.floor(pixel.x / cellSize)}:${Math.floor(pixel.y / cellSize)}`;
         if (!buckets.has(key)) buckets.set(key, []);
@@ -64,11 +67,17 @@ function IncidentLayer({ incidents }) {
           .addTo(layer);
       });
     };
+    const scheduleRender = () => {
+      if (renderFrame !== null) return;
+      renderFrame = window.requestAnimationFrame(render);
+    };
 
     render();
-    map.on("moveend zoomend", render);
+    map.on("moveend", scheduleRender);
     return () => {
-      map.off("moveend zoomend", render);
+      map.off("moveend", scheduleRender);
+      if (renderFrame !== null) window.cancelAnimationFrame(renderFrame);
+      layer.clearLayers();
       map.removeLayer(layer);
     };
   }, [incidents, map]);
@@ -76,9 +85,19 @@ function IncidentLayer({ incidents }) {
   return null;
 }
 
-function FitMalaga() {
+function FitIncidentData({ incidents }) {
   const map = useMap();
-  useEffect(() => { map.setView(malagaCenter, 12); }, [map]);
+  const fitted = useRef(false);
+
+  useEffect(() => {
+    if (fitted.current || incidents.length === 0) return;
+    const bounds = L.latLngBounds(incidents.map((incident) => [incident.latitude, incident.longitude]));
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 12, animate: false });
+      fitted.current = true;
+    }
+  }, [incidents, map]);
+
   return null;
 }
 
@@ -128,7 +147,7 @@ export default function OpenDataIncidentsMap() {
       {dataset?.unavailableYears?.length > 0 && <p className="opendata-map-warning">No se pudieron cargar los conjuntos de {dataset.unavailableYears.join(", ")}; se muestran los años disponibles.</p>}
       {!error && <MapContainer center={malagaCenter} zoom={12} scrollWheelZoom preferCanvas className="opendata-leaflet-map">
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <FitMalaga />
+        <FitIncidentData incidents={visibleIncidents} />
         <IncidentLayer incidents={visibleIncidents} />
       </MapContainer>}
       <div className="opendata-map-footer">
