@@ -32,6 +32,8 @@ La arquitectura parte de un **monolito sencillo** y solo se incorporarán nuevos
 ## Características principales
 
 - **Gestión de incidencias**: creación, consulta y seguimiento completo del ciclo de vida, modelado como una **máquina de estados** (`REPORTED → VALIDATED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED`, con `REJECTED` y `REOPENED`), con historial auditado de transiciones.
+- **Mapa de incidencias**: todos los avisos sobre el mapa, con color por estado e icono por categoría; al pulsar uno se abre su ficha.
+- **Ficha de cada incidencia**: página propia y enlazable con progreso, evidencias, historial, contexto urbano y avisos cercanos.
 - **Geolocalización**: ubicación de avisos en mapa con coordenadas, barrio y distrito.
 - **Mapa histórico de Málaga**: visualiza incidencias municipales resueltas publicadas por GECOR en Open Data Málaga (conjunto 2026, servido desde un CSV local del backend), con filtros por año, categoría y texto.
 - **Búsqueda, filtros, ordenación y paginación**: por estado, categoría, texto libre y rango de fechas, con paginación en servidor para evitar sobrecargar el cliente.

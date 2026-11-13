@@ -1,0 +1,46 @@
+/* ---------- Tarjeta de lista ---------- */
+.inc-card { position: relative; border-bottom: 1px solid var(--line); background: var(--surface); }
+.inc-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, transparent); opacity: 0; transition: opacity 0.15s;
+}
+.inc-card:hover, .inc-card.is-selected { background: var(--surface-2); }
+.inc-card.is-selected::before, .inc-card:hover::before { opacity: 1; }
+.inc-card-link {
+  display: grid; grid-template-columns: 40px 1fr 18px; gap: 14px; align-items: start; padding: 16px 52px 16px 18px;
+  text-decoration: none; color: inherit;
+}
+.inc-card-link:hover { color: inherit; }
+.inc-card-icon {
+  width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 70%, var(--ink));
+}
+.inc-card-body { display: grid; gap: 6px; min-width: 0; }
+.inc-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.inc-card-time { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
+.inc-card-title { font-size: 1.02rem; font-weight: 650; line-height: 1.25; }
+.inc-card-desc { color: var(--ink-2); font-size: 0.875rem; line-height: 1.45; }
+.inc-card-foot { display: flex; gap: 14px; margin-top: 2px; }
+.inc-card-chevron { align-self: center; color: var(--muted); grid-column: 3; grid-row: 1; }
+.inc-card-locate {
+  position: absolute; right: 12px; bottom: 12px; width: 34px; height: 34px; display: grid; place-items: center;
+  border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--ink-2);
+}
+.inc-card-locate:hover { border-color: var(--brand); color: var(--brand-strong); background: var(--brand-soft); }
+.inc-card-skeleton .inc-card-link { padding-right: 18px; }
+
+/* ---------- Ficha flotante en el mapa ---------- */
+.map-preview {
+  position: absolute; z-index: 900; left: 12px; bottom: 12px; width: min(380px, calc(100% - 24px));
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float); padding: 16px 16px 14px; display: grid; gap: 10px;
+  animation: preview-in 0.22s var(--ease);
+}
+@keyframes preview-in { from { opacity: 0; translate: 0 12px; } }
+.map-preview-close { position: absolute; right: 8px; top: 8px; }
+.map-preview > .status-pill { justify-self: start; }
+.map-preview-top { display: flex; align-items: center; gap: 10px; padding-right: 36px; }
+.map-preview-title { font-size: 1.15rem; line-height: 1.22; }
+.map-preview-link { color: var(--ink); text-decoration: none; }
+.map-preview-link:hover { color: var(--brand-strong); text-decoration: underline; }
+.map-preview-desc { color: var(--ink-2); font-size: 0.9rem; }
+.map-preview-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }

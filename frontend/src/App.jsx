@@ -1,148 +1,34 @@
-import { useEffect, useState } from "react";
-import IncidentForm from "./components/IncidentForm.jsx";
-import IncidentBoard from "./components/IncidentBoard.jsx";
-import AnalyticsDashboard from "./components/AnalyticsDashboard.jsx";
-import OpenDataIncidentsMap from "./components/OpenDataIncidentsMap.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import { getCurrentUser, logout } from "./services/AuthService.js";
+import { lazy, Suspense } from "react";
+import { Route, Routes } from "react-router-dom";
+import AppShell from "./components/layout/AppShell.jsx";
+import ExplorePage from "./pages/ExplorePage.jsx";
 
-function BrandMark() {
-  return (
-    <span className="brand-mark" aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <span />
-    </span>
-  );
+// El mapa es la portada y se carga siempre; el resto de ventanas, bajo demanda.
+const IncidentDetailPage = lazy(() => import("./pages/IncidentDetailPage.jsx"));
+const ReportPage = lazy(() => import("./pages/ReportPage.jsx"));
+const HistoricPage = lazy(() => import("./pages/HistoricPage.jsx"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage.jsx"));
+const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
+
+function PageFallback() {
+  return <div className="page" aria-busy="true"><span className="skeleton" style={{ display: "block", height: 240, borderRadius: 16 }} /></div>;
 }
 
-function Header({ currentUser, onNavigate, onLogout }) {
-  const canViewAnalytics = currentUser && ["OPERATOR", "ADMIN", "ANALYST"].includes(currentUser.role);
-
+export default function App() {
   return (
-    <header className="site-header">
-      <a className="brand" href="#inicio" aria-label="UrbanPulse, inicio">
-        <BrandMark />
-        <span>urban<span className="brand-light">pulse</span></span>
-      </a>
-      <nav className="header-nav" aria-label="Navegación principal">
-        <a className="nav-link active" href="#reportar">Reportar incidencia</a>
-        <a className="nav-link" href="#incidencias">Seguimiento</a>
-        <a className="nav-link" href="#mapa-incidencias">Mapa</a>
-        <a className="nav-link" href="#como-funciona">Cómo funciona</a>
-        {canViewAnalytics && <a className="nav-link" href="#analitica">Analítica</a>}
-      </nav>
-      {currentUser
-        ? <button className="header-action" type="button" onClick={onLogout} title={`Sesión de ${currentUser.name}`}><span className="online-dot" /><span>Cerrar sesión · {currentUser.name} ({currentUser.role})</span></button>
-        : <a className="header-action" href="/login" onClick={(event) => { event.preventDefault(); onNavigate("/login"); }}><span className="online-dot" /><span>Iniciar sesión</span></a>}
-    </header>
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<AppShell />}>
+          <Route index element={<ExplorePage />} />
+          <Route path="incidencias/:id" element={<IncidentDetailPage />} />
+          <Route path="reportar" element={<ReportPage />} />
+          <Route path="historico" element={<HistoricPage />} />
+          <Route path="analitica" element={<AnalyticsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
-
-function Intro() {
-  return (
-    <section className="intro" id="inicio">
-      <div className="intro-copy">
-        <div className="eyebrow"><span className="eyebrow-line" /> MÁLAGA · CIUDADANÍA</div>
-        <h1>Tu ciudad, <span>en movimiento.</span></h1>
-        <p>Una farola apagada, un bache, una papelera llena. Cuéntanos qué ocurre y enriqueceremos cada aviso con contexto urbano y territorial.</p>
-        <div className="intro-note">
-          <span className="note-icon" aria-hidden="true">↗</span>
-          <span>Un pequeño aviso puede cambiar toda una calle.</span>
-        </div>
-      </div>
-      <div className="city-art" aria-hidden="true">
-        <div className="sun" />
-        <div className="cloud cloud-one" /><div className="cloud cloud-two" />
-        <div className="skyline skyline-back"><i /><i /><i /><i /><i /></div>
-        <div className="skyline skyline-front"><i /><i /><i /><i /></div>
-        <div className="art-street"><span /><span /><span /></div>
-        <div className="map-pin"><span>UP</span></div>
-      </div>
-      <div className="intro-index"><span>01</span><i /> UNA CIUDAD MEJOR, ENTRE TODOS</div>
-    </section>
-  );
-}
-
-function Steps() {
-  return (
-    <section className="steps" id="como-funciona" aria-label="Cómo funciona">
-      <div className="steps-heading"><span className="section-kicker">ASÍ DE SENCILLO</span><span className="steps-caption">Solo te llevará un minuto</span></div>
-      <div className="step"><span className="step-number">01</span><span className="step-icon">⌖</span><div><strong>Ubica</strong><small>Señala el lugar exacto</small></div></div>
-      <span className="step-connector" />
-      <div className="step"><span className="step-number">02</span><span className="step-icon">✎</span><div><strong>Describe</strong><small>Detección inteligente de duplicados</small></div></div>
-      <span className="step-connector" />
-      <div className="step"><span className="step-number">03</span><span className="step-icon">↗</span><div><strong>Enviado</strong><small>Enriquecido con contexto y activos</small></div></div>
-    </section>
-  );
-}
-
-function App() {
-  const [route, setRoute] = useState(window.location.pathname);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [boardRefresh, setBoardRefresh] = useState(0);
-  const [authError, setAuthError] = useState("");
-
-  const canViewAnalytics = currentUser && ["OPERATOR", "ADMIN", "ANALYST"].includes(currentUser.role);
-
-  useEffect(() => {
-    const onPopState = () => setRoute(window.location.pathname);
-    window.addEventListener("popstate", onPopState);
-    getCurrentUser().then(setCurrentUser).catch(() => setCurrentUser(null)).finally(() => setAuthLoading(false));
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
-
-  function navigate(path) {
-    window.history.pushState({}, "", path);
-    setRoute(path);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function handleLogout() {
-    setAuthError("");
-    try {
-      await logout();
-      setCurrentUser(null);
-    } catch (error) {
-      setAuthError(error.message || "No se pudo cerrar la sesión.");
-    }
-  }
-
-  if (route === "/login") {
-    return <LoginPage onAuthenticated={(user) => { setCurrentUser(user); navigate("/"); }} onNavigateHome={() => navigate("/")} />;
-  }
-
-  return (
-    <div className="app-shell">
-      <Header currentUser={currentUser} onNavigate={navigate} onLogout={handleLogout} />
-      <main>
-        <Intro />
-        <Steps />
-        <OpenDataIncidentsMap />
-        <IncidentBoard refreshKey={boardRefresh} currentUser={currentUser} onChanged={() => setBoardRefresh((value) => value + 1)} />
-
-        {/* Panel de Analítica Territorial para Operadores / Administradores / Analistas */}
-        {canViewAnalytics && <AnalyticsDashboard />}
-
-        <section className="report-section" id="reportar">
-          {authError && <div className="auth-session-error" role="alert">{authError}</div>}
-          <div className="report-heading">
-            <div><span className="section-kicker">TU VOZ CUENTA</span><h2>¿Qué está pasando?</h2></div>
-            <span className="required-note"><i /> Campos obligatorios</span>
-          </div>
-          {authLoading
-            ? <div className="login-gate">Comprobando la sesión…</div>
-            : currentUser
-              ? <IncidentForm onCreated={() => setBoardRefresh((value) => value + 1)} />
-              : <div className="login-gate"><strong>Inicia sesión para comunicar una incidencia.</strong><span>Tu cuenta permite consultar y gestionar tus avisos.</span><a href="/login" onClick={(event) => { event.preventDefault(); navigate("/login"); }}>Iniciar sesión o crear cuenta <span aria-hidden="true">↗</span></a></div>}
-          <div className="privacy-note"><span aria-hidden="true">◈</span> Tus datos se utilizan únicamente para gestionar esta incidencia.</div>
-        </section>
-        <footer className="site-footer"><a className="brand footer-brand" href="#inicio"><BrandMark /><span>urban<span className="brand-light">pulse</span></span></a><span>Una ciudad más cuidada empieza contigo.</span><span className="footer-city">MÁLAGA <i>·</i> 2026</span></footer>
-      </main>
-    </div>
-  );
-}
-
-export default App;

@@ -17,6 +17,8 @@ npm run build
 
 Spring Boot produce el JAR en `backend/target/` y Vite genera los recursos en `frontend/dist/`.
 
+El frontend es una SPA con rutas del navegador (`/incidencias/:id`, `/reportar`, `/historico`…). El servidor que publique `frontend/dist/` debe devolver `index.html` para cualquier ruta que no sea un archivo existente ni empiece por `/api`; de lo contrario, recargar o compartir un enlace a una incidencia daría un 404.
+
 ## Despliegue y seguridad
 
 La API usa sesiones HttpOnly y protección CSRF. En producción debe servirse detrás de HTTPS para proteger las credenciales y cookies durante el transporte. Configura un administrador inicial mediante secretos de entorno; no guardes esas credenciales en Git ni dejes cuentas predeterminadas.

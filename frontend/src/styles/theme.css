@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Tokens de diseño. Todo el color de la app sale de aquí; el modo oscuro solo
+   redefine variables (html[data-theme="dark"]).
+   ========================================================================== */
+:root {
+  --font-display: "Bricolage Grotesque Variable", "Public Sans Variable", system-ui, sans-serif;
+  --font-body: "Public Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --surface-2: #f7f9f8;
+  --sunken: #e8eeec;
+  --ink: #0f2321;
+  --ink-2: #3d514e;
+  --muted: #5b6f6c;
+  --line: #d9e2e0;
+  --line-strong: #bccac7;
+
+  --brand: #0b6b5d;
+  --brand-strong: #08554a;
+  --brand-soft: #dcefeb;
+  --on-brand: #ffffff;
+
+  --accent: #f2a51c;
+  --accent-strong: #d98c05;
+  --accent-soft: #fdf0d3;
+  --on-accent: #2a1c00;
+
+  --danger: #b4283c;
+  --danger-soft: #fbe6e9;
+  --focus: #0b6b5d;
+
+  /* Estados de una incidencia: color + icono + texto, nunca solo color */
+  --st-reported: #3b6fb6;
+  --st-validated: #0f8a7e;
+  --st-assigned: #6b5bb5;
+  --st-in_progress: #c27c0b;
+  --st-resolved: #3a8a3f;
+  --st-closed: #64748b;
+  --st-reopened: #c4552a;
+  --st-rejected: #b4455a;
+
+  --shadow-float: 0 10px 30px rgb(8 28 25 / 0.18), 0 2px 6px rgb(8 28 25 / 0.1);
+  --shadow-pop: 0 4px 14px rgb(8 28 25 / 0.14);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+
+  --topbar-h: 60px;
+  --bottomnav-h: 64px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --bg: #0a1214;
+  --surface: #111c1f;
+  --surface-2: #15242a;
+  --sunken: #0d171a;
+  --ink: #e8f1ef;
+  --ink-2: #bdcfcb;
+  --muted: #8ea5a1;
+  --line: #223539;
+  --line-strong: #315055;
+
+  --brand: #4cc2ab;
+  --brand-strong: #7ad8c5;
+  --brand-soft: #123530;
+  --on-brand: #052019;
+
+  --accent: #f4b942;
+  --accent-strong: #ffd070;
+  --accent-soft: #382a09;
+  --on-accent: #261a00;
+
+  --danger: #f0899a;
+  --danger-soft: #3a1820;
+  --focus: #f4b942;
+
+  --st-reported: #7fa8e6;
+  --st-validated: #4fc9b8;
+  --st-assigned: #a79bef;
+  --st-in_progress: #f0b94d;
+  --st-resolved: #7fd186;
+  --st-closed: #9aa9bb;
+  --st-reopened: #f08a62;
+  --st-rejected: #ef8497;
+
+  --shadow-float: 0 12px 34px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 4px 16px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem); letter-spacing: -0.025em; }
+h2 { font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.6rem); }
+h3 { font-size: 1.05rem; }
+p { margin: 0; }
+a { color: var(--brand); text-underline-offset: 3px; }
+a:hover { color: var(--brand-strong); }
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+small { font-size: 0.8125rem; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.skip-link {
+  position: fixed; left: 12px; top: -60px; z-index: 5000;
+  background: var(--ink); color: var(--bg); padding: 10px 14px;
+  border-radius: var(--r-md); transition: top 0.15s var(--ease);
+}
+.skip-link:focus { top: 12px; color: var(--bg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

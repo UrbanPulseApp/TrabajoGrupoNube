@@ -1,73 +1,113 @@
 import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, Camera, Eye, EyeOff, LogOut, MapPin, Route, TriangleAlert } from "lucide-react";
 import { login, registerCitizen } from "../services/AuthService.js";
+import { ROLE_LABEL, useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import useDocumentTitle from "../lib/useDocumentTitle.js";
+import BrandMark from "../components/ui/BrandMark.jsx";
+import ThemeToggle from "../components/layout/ThemeToggle.jsx";
 import "./LoginPage.css";
 
-function BrandMark() {
-  return <span className="brand-mark" aria-hidden="true"><span /><span /><span /><span /></span>;
-}
-
-export default function LoginPage({ onAuthenticated, onNavigateHome }) {
+export default function LoginPage() {
+  const { user, setUser, logout } = useAuth();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  // Solo se vuelve a rutas internas: una barra inicial que no vaya seguida de otra barra ni de "\\"
+  const requested = location.state?.from;
+  const from = typeof requested === "string" && /^\/(?![/\\])/.test(requested) && !requested.startsWith("/login") ? requested : "/";
+  const register = mode === "register";
 
-  function updateField(event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
-  }
+  useDocumentTitle(user ? "Tu cuenta" : register ? "Crear cuenta" : "Iniciar sesión");
+
+  const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    setIsSubmitting(true);
+    setSubmitting(true);
     try {
-      if (mode === "register") await registerCitizen(form);
-      const user = await login({ email: form.email, password: form.password });
-      onAuthenticated(user);
+      if (register) await registerCitizen(form);
+      const account = await login({ email: form.email, password: form.password });
+      setUser(account);
+      toast(`Hola, ${account.name}.`);
+      navigate(from, { replace: true });
     } catch (submitError) {
       setError(submitError.message || "No se pudo completar la operación.");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   }
 
-  return (
-    <main className="auth-page">
-      <div className="auth-topbar">
-        <a className="auth-brand" href="/" onClick={(event) => { event.preventDefault(); onNavigateHome(); }}>
-          <BrandMark /><span>urban<span>pulse</span></span>
-        </a>
-        <a className="auth-back" href="/" onClick={(event) => { event.preventDefault(); onNavigateHome(); }}>← Volver a la página principal</a>
-      </div>
-      <section className="auth-layout">
-        <aside className="auth-aside">
-          <span className="auth-eyebrow"><i /> MÁLAGA · CIUDADANÍA</span>
-          <h1>Una ciudad mejor empieza <em>contigo.</em></h1>
-          <p>Accede a UrbanPulse para comunicar incidencias y seguir cómo evoluciona cada aviso.</p>
-          <div className="auth-aside-note"><span>↗</span><div><strong>Tu cuenta, tu ciudad</strong><small>Un espacio sencillo para participar y estar al día.</small></div></div>
-          <div className="auth-city-art" aria-hidden="true"><div className="auth-sun"/><div className="auth-building building-a"/><div className="auth-building building-b"/><div className="auth-building building-c"/><div className="auth-road"/><span className="auth-pin">UP</span></div>
-        </aside>
+  async function handleLogout() {
+    try { await logout(); toast("Has cerrado la sesión."); } catch (logoutError) { toast(logoutError.message || "No se pudo cerrar la sesión.", "error"); }
+  }
 
-        <div className="auth-panel">
-          {error && <div className="auth-error" role="alert">{error}</div>}
-          <div className="auth-panel-heading">
-            <span className="section-kicker">{mode === "login" ? "QUÉ BUENO VERTE" : "PARTICIPA EN TU CIUDAD"}</span>
-            <h2>{mode === "login" ? "Inicia sesión" : "Crea tu cuenta"}</h2>
-            <p>{mode === "login" ? "Introduce tus datos para continuar." : "El registro crea una cuenta ciudadana."}</p>
-          </div>
-          <form className="auth-form" onSubmit={handleSubmit}>
-            {mode === "register" && <div className="auth-field"><label htmlFor="name">Nombre</label><input id="name" name="name" autoComplete="name" value={form.name} onChange={updateField} maxLength={100} required /></div>}
-            <div className="auth-field"><label htmlFor="email">Correo electrónico</label><input id="email" name="email" type="email" autoComplete="email" value={form.email} onChange={updateField} maxLength={150} required /></div>
-            <div className="auth-field"><label htmlFor="password">Contraseña</label><input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={form.password} onChange={updateField} minLength={mode === "register" ? 12 : undefined} maxLength={72} required /><small>{mode === "register" ? "Mínimo 12 caracteres." : ""}</small></div>
-            <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Un momento…" : mode === "login" ? "Entrar" : "Crear cuenta y entrar"}<span aria-hidden="true">↗</span></button>
-          </form>
-          <div className="auth-switch">
-            {mode === "login" ? <>¿Aún no tienes cuenta? <button type="button" onClick={() => { setError(""); setMode("register"); }}>Regístrate como ciudadano</button></> : <>¿Ya tienes cuenta? <button type="button" onClick={() => { setError(""); setMode("login"); }}>Inicia sesión</button></>}
-          </div>
-          <div className="auth-security"><span>◈</span> La contraseña se transmite por sesión segura y no se guarda en el navegador.</div>
+  return (
+    <div className="auth">
+      <aside className="auth-aside">
+        <Link className="brand auth-brand" to="/"><BrandMark size={30} /><span>urban<b>pulse</b></span></Link>
+        <div className="auth-pitch">
+          <h1>La ciudad se arregla antes cuando alguien avisa.</h1>
+          <ul>
+            <li><MapPin aria-hidden="true" /><span>Marca el problema en el mapa en segundos.</span></li>
+            <li><Camera aria-hidden="true" /><span>Añade fotos para que el equipo lo encuentre.</span></li>
+            <li><Route aria-hidden="true" /><span>Sigue cada aviso desde que se recibe hasta que se cierra.</span></li>
+          </ul>
         </div>
-      </section>
-      <footer className="auth-footer"><span>URBANPULSE</span><span>MÁLAGA · CIUDADANÍA</span></footer>
-    </main>
+        <p className="auth-foot">Málaga, 2026</p>
+      </aside>
+
+      <main className="auth-main" id="main">
+        <div className="auth-top">
+          <Link className="back-link" to="/" style={{ margin: 0 }}><ArrowLeft size={17} aria-hidden="true" /> Volver al mapa</Link>
+          <ThemeToggle />
+        </div>
+
+        {user ? (
+          <div className="auth-card">
+            <span className="avatar avatar-lg" aria-hidden="true">{user.name?.[0]?.toUpperCase() || "U"}</span>
+            <h2>{user.name}</h2>
+            <p className="auth-sub">{user.email}</p>
+            <span className="role-tag" style={{ justifySelf: "center" }}>{ROLE_LABEL[user.role] || user.role}</span>
+            <div className="auth-account-actions">
+              <Link className="btn btn-primary" to="/">Ir al mapa</Link>
+              <button type="button" className="btn btn-outline" onClick={handleLogout}><LogOut size={16} aria-hidden="true" /> Cerrar sesión</button>
+            </div>
+          </div>
+        ) : (
+          <div className="auth-card">
+            <h2>{register ? "Crea tu cuenta" : "Inicia sesión"}</h2>
+            <p className="auth-sub">{register ? "El registro crea una cuenta ciudadana." : "Accede para reportar y seguir tus avisos."}</p>
+            {error && <div className="alert" role="alert"><TriangleAlert aria-hidden="true" /><span>{error}</span></div>}
+            <form className="auth-form" onSubmit={handleSubmit}>
+              {register && (
+                <div className="field"><label htmlFor="name">Nombre</label><input id="name" name="name" className="input" autoComplete="name" value={form.name} onChange={update} maxLength={100} required /></div>
+              )}
+              <div className="field"><label htmlFor="email">Correo electrónico</label><input id="email" name="email" type="email" className="input" autoComplete="email" value={form.email} onChange={update} maxLength={150} required /></div>
+              <div className="field">
+                <label htmlFor="password">Contraseña</label>
+                <div className="password-wrap">
+                  <input id="password" name="password" className="input" type={showPassword ? "text" : "password"} autoComplete={register ? "new-password" : "current-password"} value={form.password} onChange={update} minLength={register ? 12 : undefined} maxLength={72} required />
+                  <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>{showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
+                </div>
+                {register && <span className="field-hint">Mínimo 12 caracteres.</span>}
+              </div>
+              <button className="btn btn-primary btn-lg" type="submit" disabled={submitting}>{submitting ? <><span className="spinner" /> Un momento…</> : register ? "Crear cuenta y entrar" : "Entrar"}</button>
+            </form>
+            <p className="auth-switch">
+              {register ? "¿Ya tienes cuenta?" : "¿Aún no tienes cuenta?"}{" "}
+              <button type="button" className="link-button" onClick={() => { setError(""); setMode(register ? "login" : "register"); }}>{register ? "Inicia sesión" : "Regístrate"}</button>
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

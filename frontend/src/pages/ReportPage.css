@@ -1,0 +1,87 @@
+.report { display: grid; grid-template-columns: 480px minmax(0, 1fr); height: calc(100dvh - var(--topbar-h)); min-height: 520px; }
+.report-panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line); }
+.report-body { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 24px 20px; display: grid; gap: 16px; align-content: start; }
+.report-body h1 { font-size: 1.6rem; outline: none; }
+.report-lead { color: var(--ink-2); max-width: 44ch; }
+.report-body > .btn { justify-self: start; }
+.report-form { display: grid; gap: 18px; }
+.report-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--line); background: var(--surface); }
+.report-map { min-width: 0; }
+
+/* Pasos (es una secuencia real, por eso van numerados) */
+.wizard-steps { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.wizard-steps button {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 6px; border: 0; background: transparent;
+  color: var(--muted); font-weight: 650; font-size: 0.875rem; border-bottom: 3px solid transparent;
+}
+.wizard-steps button:disabled { cursor: default; }
+.wizard-num { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--sunken); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.wizard-steps .is-current button { color: var(--ink); border-bottom-color: var(--brand); }
+.wizard-steps .is-current .wizard-num { background: var(--brand); color: var(--on-brand); }
+.wizard-steps .is-done button { color: var(--ink-2); }
+.wizard-steps .is-done .wizard-num { background: var(--brand-soft); color: var(--brand-strong); }
+
+.location-chip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken); color: var(--ink-2); }
+.location-chip.is-set { background: var(--brand-soft); color: var(--ink); }
+.location-chip.is-set svg { color: var(--brand); }
+.location-chip b { display: block; font-weight: 650; }
+.map-hint {
+  position: absolute; z-index: 850; left: 50%; top: 16px; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 650; box-shadow: var(--shadow-float); white-space: nowrap;
+}
+
+.category-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.category-field legend { padding: 0; margin-bottom: 8px; }
+.category-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.category-tile {
+  display: grid; justify-items: center; gap: 6px; padding: 14px 6px; text-align: center; cursor: pointer;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); color: var(--ink-2); font-weight: 600; font-size: 0.8125rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.category-tile:hover { border-color: var(--brand); }
+.category-tile.is-checked { border-color: var(--brand); background: var(--brand-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--brand); }
+.category-tile.is-checked svg { color: var(--brand); }
+.category-tile:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.field-count { display: flex; justify-content: space-between; }
+
+.dropzone {
+  display: grid; justify-items: center; gap: 4px; padding: 20px 14px; text-align: center; cursor: pointer;
+  border: 2px dashed var(--line-strong); border-radius: var(--r-md); color: var(--ink-2); background: var(--surface-2);
+}
+.dropzone:hover, .dropzone.is-dragging { border-color: var(--brand); background: var(--brand-soft); }
+.dropzone:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dropzone strong { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.dropzone small { color: var(--muted); }
+.evidence-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+.evidence-grid li { position: relative; display: grid; gap: 4px; min-width: 0; }
+.evidence-grid img, .evidence-doc { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sunken); }
+.evidence-doc { display: grid; place-items: center; color: var(--muted); }
+.evidence-name { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.evidence-grid button { position: absolute; right: -6px; top: -6px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--surface); background: var(--ink); color: var(--bg); }
+
+.review { display: grid; margin: 0; }
+.review > div { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.review dt { color: var(--muted); font-size: 0.875rem; }
+.review dd { margin: 0; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.review-desc { font-weight: 400 !important; color: var(--ink-2); white-space: pre-line; }
+.dup-list { display: grid; gap: 6px; margin-top: 8px; }
+.dup-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dup-list a { font-weight: 650; color: inherit; }
+
+.report-done { display: grid; justify-items: center; gap: 14px; text-align: center; padding: 44px 24px; }
+.report-done-icon { width: 60px; height: 60px; color: var(--st-resolved); }
+.report-done h1 { outline: none; }
+.report-done p { color: var(--ink-2); max-width: 44ch; }
+.ref-line strong { font-size: 1.1rem; color: var(--ink); letter-spacing: 0.04em; }
+
+@media (max-width: 899px) {
+  .report { grid-template-columns: 1fr; grid-template-rows: 42dvh auto; height: auto; min-height: 0; }
+  .report-map { grid-row: 1; }
+  .map-hint { top: auto; bottom: 14px; font-size: 0.875rem; }
+  .report-panel { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); }
+  .report:not([data-step="0"]) { grid-template-rows: auto; }
+  .report:not([data-step="0"]) .report-map { display: none; }
+  .report:not([data-step="0"]) .report-panel { grid-row: 1; border-top: 0; }
+  .report-body { overflow: visible; padding: 20px 16px; }
+  .report-actions { position: sticky; bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom)); padding: 12px 16px; }
+}
