@@ -19,7 +19,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const from = typeof location.state?.from === "string" && location.state.from !== "/login" ? location.state.from : "/";
+  // Solo se vuelve a rutas internas: una barra inicial que no vaya seguida de otra barra ni de "\\"
+  const requested = location.state?.from;
+  const from = typeof requested === "string" && /^\/(?![/\\])/.test(requested) && !requested.startsWith("/login") ? requested : "/";
   const register = mode === "register";
 
   useDocumentTitle(user ? "Tu cuenta" : register ? "Crear cuenta" : "Iniciar sesión");
