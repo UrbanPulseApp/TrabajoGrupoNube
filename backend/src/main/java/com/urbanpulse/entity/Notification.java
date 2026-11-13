@@ -1,11 +1,5 @@
 package com.urbanpulse.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -23,11 +17,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "notifications")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Notification {
 
     public enum NotificationType {
@@ -61,7 +50,6 @@ public class Notification {
     private NotificationType type;
 
     @Column(name = "is_read", nullable = false)
-    @Builder.Default
     private boolean read = false;
 
     @Column(nullable = false)
@@ -75,7 +63,6 @@ public class Notification {
             createdAt = LocalDateTime.now();
         }
     }
-
 
     public UUID getId() {
         return id;

@@ -72,7 +72,7 @@ El `PATCH` recibe `{"status":"VALIDATED","reason":"Datos suficientes"}`. `reason
 |---|---|---|
 | `GET /api/opendata/incidents` | Público | Devuelve expedientes GECOR resueltos con coordenadas válidas, años cargados, años no disponibles y fecha de consulta. |
 
-La API consulta los CSV anuales publicados por el [Ayuntamiento de Málaga](https://datosabiertos.malaga.eu/dataset/incidencias-resueltas-en-la-via-publica-para-el-ano-2026). Por defecto incluye desde 2020 hasta el año actual; `URBANPULSE_GECOR_FIRST_YEAR` permite cambiar el periodo. Los datos se guardan en caché durante 12 horas y no se insertan en las tablas operativas de UrbanPulse. La respuesta se limita a 25.000 puntos, priorizando los más recientes. Atribución: Ayuntamiento de Málaga, Open Data Málaga, conjunto GECOR, licencia CC BY 4.0.
+La API sirve las incidencias resueltas del conjunto GECOR (año 2026), publicado por el [Ayuntamiento de Málaga](https://datosabiertos.malaga.eu/dataset/incidencias-resueltas-en-la-via-publica-para-el-ano-2026), desde un CSV incluido en el backend (`backend/src/main/resources/data/gecor/gecor-2026.csv`), por lo que no requiere conexión a Internet. Los datos no se insertan en las tablas operativas de UrbanPulse. Para añadir otro año, incorpora `gecor-<año>.csv` en esa carpeta y añade el año a `SUPPORTED_YEARS` de `OpenDataIncidentService`. Atribución: Ayuntamiento de Málaga, Open Data Málaga, conjunto GECOR, licencia CC BY 4.0.
 
 ## 5. Contexto urbano y activos físicos
 

@@ -9,8 +9,6 @@ import java.util.List;
 
 public interface UrbanAssetRepository extends JpaRepository<UrbanAsset, String> {
 
-    List<UrbanAsset> findByType(String type);
-
     @Query("SELECT a FROM UrbanAsset a WHERE a.latitude BETWEEN :minLat AND :maxLat AND a.longitude BETWEEN :minLon AND :maxLon")
     List<UrbanAsset> findWithinBoundingBox(@Param("minLat") Double minLat,
                                            @Param("maxLat") Double maxLat,

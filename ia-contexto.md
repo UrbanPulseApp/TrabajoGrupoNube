@@ -3,7 +3,7 @@
 ## 1. Descripción y Propósito
 UrbanPulse es una plataforma cloud para la gestión inteligente de incidencias urbanas que integra reportes de la ciudadanía con datos contextuales de la ciudad de Málaga.
 * **Arquitectura:** Monolito en Spring Boot (backend) + React con Vite (frontend) + PostgreSQL.
-* **Documentación técnica:** Modelo C4 (`docs/workspace.dsl`) y ADRs en `docs/adr/`.
+* **Documentación técnica:** Modelo C4 (`docs/diagrama-C4/`) y ADRs en `docs/adr/`.
 
 ## 2. Dominio y Seguridad
 * **Identificadores Opacos (UUID):** Claves primarias (`User`, `Incident`, `Assignment`, `Attachment`, `StatusChange`) en `UUID` para evitar vulnerabilidades IDOR.

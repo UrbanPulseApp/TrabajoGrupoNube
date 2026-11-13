@@ -1,11 +1,5 @@
 package com.urbanpulse.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -20,11 +14,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "urban_contexts")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class UrbanContext {
 
     @Id
@@ -50,8 +39,17 @@ public class UrbanContext {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "urban_context_id")
-    @Builder.Default
     private List<ExternalObservation> observations = new ArrayList<>();
+
+    /** Contexto de reserva (degradación controlada) cuando las fuentes externas no responden. */
+    public static UrbanContext unavailable(UUID incidentId) {
+        UrbanContext context = new UrbanContext();
+        context.setIncidentId(incidentId);
+        context.setWeatherSummary("No disponible (degradación controlada)");
+        context.setTrafficStatus("No disponible (degradación controlada)");
+        context.setCapturedAt(LocalDateTime.now());
+        return context;
+    }
 
     public UUID getIncidentId() {
         return incidentId;
