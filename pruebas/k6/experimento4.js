@@ -3,10 +3,23 @@ import { check, sleep } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const USER_EMAIL = __ENV.USER_EMAIL || 'juan.perez@ciudadano.es';
+const USER_EMAIL = __ENV.USER_EMAIL || 'carlos.rodriguez@urbanpulse.es';
 const USER_PASSWORD = __ENV.USER_PASSWORD || 'contrasenasegura123';
 const VUS = Number(__ENV.VUS || 15);
-const STAGE_DURATION = __ENV.DURATION || '1m';
+const STAGE_SECONDS = Number(__ENV.STAGE_SECONDS || 60);
+const STAGE_DURATION = `${STAGE_SECONDS}s`;
+const STAGE_SPACING_SECONDS = STAGE_SECONDS + 5;
+
+if (!Number.isInteger(VUS) || VUS < 1) {
+    throw new Error('VUS debe ser un entero positivo.');
+}
+if (!Number.isInteger(STAGE_SECONDS) || STAGE_SECONDS < 1) {
+    throw new Error('STAGE_SECONDS debe ser un entero positivo.');
+}
+
+function startTimeForStage(index) {
+    return `${index * STAGE_SPACING_SECONDS}s`;
+}
 
 const operationMetrics = {
     filtrada: {
@@ -19,10 +32,10 @@ const operationMetrics = {
         requests: new Counter('paginacion_profunda_requests'),
         errors: new Counter('paginacion_profunda_errors'),
     },
-    agregada: {
-        latency: new Trend('consulta_opendata_latency', true),
-        requests: new Counter('consulta_opendata_requests'),
-        errors: new Counter('consulta_opendata_errors'),
+    analitica: {
+        latency: new Trend('consulta_analitica_latency', true),
+        requests: new Counter('consulta_analitica_requests'),
+        errors: new Counter('consulta_analitica_errors'),
     },
     escritura: {
         latency: new Trend('escritura_incidencia_latency', true),
@@ -41,6 +54,10 @@ function record(op, response, expectedStatuses = [200]) {
 
 export const options = {
     summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
+    thresholds: {
+        checks: ['rate>0.99'],
+        http_req_failed: ['rate<0.01'],
+    },
     scenarios: {
         consulta_filtrada: {
             executor: 'constant-vus',
@@ -53,23 +70,23 @@ export const options = {
             executor: 'constant-vus',
             vus: VUS,
             duration: STAGE_DURATION,
-            startTime: '1m5s',
+            startTime: startTimeForStage(1),
             gracefulStop: '2s',
             exec: 'paginacionProfunda',
         },
-        consulta_opendata: {
+        consulta_analitica: {
             executor: 'constant-vus',
             vus: VUS,
             duration: STAGE_DURATION,
-            startTime: '2m10s',
+            startTime: startTimeForStage(2),
             gracefulStop: '2s',
-            exec: 'consultaOpenData',
+            exec: 'consultaAnalitica',
         },
         escritura_concurrente: {
             executor: 'constant-vus',
             vus: VUS,
             duration: STAGE_DURATION,
-            startTime: '3m15s',
+            startTime: startTimeForStage(3),
             gracefulStop: '2s',
             exec: 'escrituraConcurrente',
         },
@@ -107,6 +124,9 @@ export function setup() {
 
     const xsrfToken = csrfRes.json('token')
         || (csrfRes.cookies['XSRF-TOKEN'] && csrfRes.cookies['XSRF-TOKEN'][0].value);
+    if (!xsrfToken) {
+        throw new Error('No se pudo extraer el token XSRF-TOKEN.');
+    }
 
     return { sessionId, xsrfToken };
 }
@@ -131,13 +151,16 @@ export function paginacionProfunda() {
     sleep(1);
 }
 
-export function consultaOpenData() {
+export function consultaAnalitica(data) {
     const response = http.get(
-        `${BASE_URL}/api/opendata/incidents`,
-        { tags: { operation: 'consulta_opendata' } },
+        `${BASE_URL}/api/analytics/summary`,
+        {
+            cookies: { JSESSIONID: data.sessionId },
+            tags: { operation: 'consulta_analitica' },
+        },
     );
-    const ok = record('agregada', response, [200]);
-    check(response, { 'consulta opendata responde 200': () => ok });
+    const ok = record('analitica', response, [200]);
+    check(response, { 'consulta analítica responde 200': () => ok });
     sleep(1);
 }
 
@@ -168,7 +191,7 @@ export function escrituraConcurrente(data) {
             tags: { operation: 'escritura_concurrente' },
         },
     );
-    const ok = record('escritura', response, [200, 201]);
+    const ok = record('escritura', response, [201]);
     check(response, { 'escritura responde 201': () => ok });
     sleep(1);
 }

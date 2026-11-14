@@ -1,9 +1,6 @@
 # Experimentos k6 1, 2, 3 y 4
 
-Los resultados y el análisis de las preguntas de la práctica están documentados en:
-
-- Experimentos 1 y 2: [`docs/resultados-k6-experimentos-1-2.md`](../../docs/resultados-k6-experimentos-1-2.md)
-- Experimentos 3 y 4: [`docs/resultados-k6-experimentos-3-4.md`](../../docs/resultados-k6-experimentos-3-4.md)
+Los resultados y el análisis de los cuatro experimentos están documentados en [`docs/resultados-k6.md`](../../docs/resultados-k6.md).
 
 Requisitos: PostgreSQL iniciado, backend UrbanPulse iniciado y k6 instalado. El `docker-compose.yml` levanta solo PostgreSQL. Desde la raíz del repositorio, inicia la base de datos (si aún no está activa):
 
@@ -66,18 +63,26 @@ Simula un episodio de lluvias intensas en Málaga durante 3 minutos y 30 segundo
 
 En la fase `setup()`, el script inicia sesión con el usuario de prueba `juan.perez@ciudadano.es` (`contrasenasegura123`) y obtiene el token `XSRF-TOKEN` desde `/api/auth/csrf` para reutilizar la sesión autenticada en todas las peticiones `POST`. Se pueden ajustar `MAP_VUS`, `SPIKE_RATE`, `PREALLOCATED_VUS` y `MAX_VUS` mediante `--env`.
 
+Este experimento inserta incidencias reales en PostgreSQL y no las elimina al terminar. Con la configuración por defecto puede crear alrededor de 5.500 filas; guarda una copia de la base antes de ejecutarlo o usa una base aislada.
+
 ## Experimento 4: volumen de datos e indexación
 
 ```sh
 k6 run pruebas/k6/experimento4.js
 ```
 
-Ejecuta secuencialmente cuatro escenarios con 15 VUs durante 1 minuto cada uno (autenticando sesión y CSRF en `setup()`):
+Ejecuta secuencialmente cuatro escenarios con 15 VUs durante 1 minuto cada uno (autenticando el usuario operador y obteniendo CSRF en `setup()`):
 
 1. `consulta_filtrada`: `GET /api/incidents?status=REPORTED&category=STREET&page=0&size=20&sort=-createdAt`
 2. `paginacion_profunda`: `GET /api/incidents?page=50&size=20&sort=-createdAt`
-3. `consulta_opendata`: `GET /api/opendata/incidents`
+3. `consulta_analitica`: `GET /api/analytics/summary` (agregados calculados desde PostgreSQL; requiere rol operador, administrador o analista)
 4. `escritura_concurrente`: `POST /api/incidents`
+
+El intervalo entre escenarios es de 5 segundos. Se pueden reducir las pruebas funcionales con `--env VUS=1 --env STAGE_SECONDS=5`; cada bloque usa 5 segundos y el informe calcula el throughput por operación como el número de peticiones dividido por los segundos del bloque. La configuración por defecto puede crear alrededor de 900 incidencias en el último bloque. Las escrituras permanecen en PostgreSQL al terminar, así que ejecuta el test en una base aislada o limpia las filas sintéticas antes de repetirlo.
+
+`GET /api/opendata/incidents` no sirve para medir el efecto del volumen o de los índices de `incidents`: el backend carga ese recurso desde un CSV estático incluido en el proyecto.
+
+Las escrituras de este escenario son persistentes. Para comparar volúmenes o índices, restaura una copia de PostgreSQL con el mismo número de filas antes de **cada** ejecución; si se repite el script sin restaurar, el bloque `POST` añade alrededor de 900 filas por pasada y las mediciones dejan de ser comparables. Prepara una copia para cada condición: volumen base, volumen ampliado e índices.
 
 Para comparar distintos volúmenes y medir el efecto de la indexación en PostgreSQL:
 
@@ -91,4 +96,4 @@ CREATE INDEX idx_incidents_created_at ON incidents (created_at DESC);
 ANALYZE incidents;
 ```
 
-4. Para restaurar el entorno tras las pruebas, elimina los índices adicionales (`DROP INDEX IF EXISTS idx_incidents_status_category_created, idx_incidents_created_at;`) y limpia los registros sintéticos generados.
+4. Al terminar, restaura la copia base para quitar los índices y las filas sintéticas, o elimina los índices adicionales (`DROP INDEX IF EXISTS idx_incidents_status_category_created, idx_incidents_created_at;`) y restaura también el conjunto de filas original.
