@@ -3,6 +3,14 @@ import { check, sleep } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+const DURATION_SECONDS = Number(__ENV.DURATION_SECONDS || 120);
+const STAGE_DURATION = `${DURATION_SECONDS}s`;
+const STAGE_SPACING_SECONDS = DURATION_SECONDS + 2;
+
+if (!Number.isInteger(DURATION_SECONDS) || DURATION_SECONDS < 1) {
+    throw new Error('DURATION_SECONDS debe ser un entero positivo.');
+}
+
 const operationMetrics = {
     listado: {
         latency: new Trend('listado_incidencias_latency', true),
@@ -29,27 +37,34 @@ function recordOperation(operation, response) {
 
 export const options = {
     summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
+    thresholds: {
+        checks: ['rate>0.99'],
+        http_req_failed: ['rate<0.01'],
+        listado_incidencias_latency: ['p(95)<500'],
+        busqueda_duplicados_latency: ['p(95)<500'],
+        detalle_incidencia_latency: ['p(95)<500'],
+    },
     scenarios: {
         listado_incidencias: {
             executor: 'constant-vus',
             vus: 10,
-            duration: '2m',
+            duration: STAGE_DURATION,
             gracefulStop: '2s',
             exec: 'listadoIncidencias',
         },
         busqueda_duplicados: {
             executor: 'constant-vus',
             vus: 10,
-            duration: '2m',
-            startTime: '2m2s',
+            duration: STAGE_DURATION,
+            startTime: `${STAGE_SPACING_SECONDS}s`,
             gracefulStop: '2s',
             exec: 'busquedaDuplicados',
         },
         detalle_incidencia: {
             executor: 'constant-vus',
             vus: 10,
-            duration: '2m',
-            startTime: '4m4s',
+            duration: STAGE_DURATION,
+            startTime: `${2 * STAGE_SPACING_SECONDS}s`,
             gracefulStop: '2s',
             exec: 'detalleIncidencia',
         },

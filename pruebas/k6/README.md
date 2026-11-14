@@ -1,99 +1,141 @@
-# Experimentos k6 1, 2, 3 y 4
+# Pruebas de carga k6 y observabilidad
 
-Los resultados y el análisis de los cuatro experimentos están documentados en [`docs/resultados-k6.md`](../../docs/resultados-k6.md).
+Los cuatro experimentos y sus resultados están documentados en [`docs/resultados-k6.md`](../../docs/resultados-k6.md).
 
-Requisitos: PostgreSQL iniciado, backend UrbanPulse iniciado y k6 instalado. El `docker-compose.yml` levanta solo PostgreSQL. Desde la raíz del repositorio, inicia la base de datos (si aún no está activa):
+## Requisitos y arranque
+
+Se necesita Docker, Java/Maven, k6 y PostgreSQL. El Compose base inicia PostgreSQL; el backend y el frontend se inician por separado. No hace falta abrir IntelliJ ni el frontend para ejecutar los scripts.
 
 ```sh
 docker compose up -d postgres
-```
-
-Espera a que el contenedor esté saludable y, en otra terminal, inicia el backend:
-
-```sh
 cd backend
 mvn spring-boot:run
 ```
 
-Espera a que Spring indique que ha arrancado y ejecuta los comandos k6 desde la raíz del repositorio. El backend usa por defecto `jdbc:postgresql://localhost:5432/urbanpulse`, con las credenciales de desarrollo definidas como valores por defecto en Compose y `application.properties`. No es necesario iniciar IntelliJ ni el frontend. Por defecto, los scripts usan `http://localhost:8080`; se puede cambiar con `--env BASE_URL=...`.
+El backend usa por defecto `jdbc:postgresql://localhost:5432/urbanpulse` y escucha en el puerto 8080. Los scripts k6 se ejecutan desde la raíz del repositorio y aceptan `--env BASE_URL=...` para apuntar a otra instancia.
 
-## Experimento 1: línea base por operación
+## Observabilidad con Prometheus y Grafana
+
+El backend incorpora Spring Boot Actuator y Micrometer Prometheus. Para probar sin detener la instancia habitual, se puede iniciar una segunda instancia en el puerto 8081; ajusta `DATABASE_URL` si quieres medir otra base:
+
+```powershell
+$env:PORT = '8081'
+$env:DATABASE_URL = 'jdbc:postgresql://localhost:5432/urbanpulse'
+cd backend
+mvn spring-boot:run
+```
+
+En otra terminal, inicia Prometheus y Grafana:
 
 ```sh
-k6 run pruebas/k6/experimento1.js
+docker compose --profile observability up -d postgres prometheus grafana
 ```
 
-Ejecuta tres operaciones de lectura respaldadas por la API de incidencias, una detrás de otra, con 10 VUs durante 2 minutos cada una: listado paginado, búsqueda de duplicados y consulta de detalle. Antes de empezar, obtiene un UUID real del listado para que la consulta de detalle no dependa de un identificador inventado. El resumen incluye tendencias independientes de latencia (mediana/p50, p95 y p99) y contadores de peticiones y errores por operación; calcula el throughput de cada bloque como sus peticiones divididas por 120 segundos. La petición inicial solo prepara el UUID y no debe incluirse en la comparación.
+Prometheus recoge métricas de `http://localhost:8081/actuator/prometheus` cada 5 segundos. La URL del dashboard provisionado es [`http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance`](http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance); el acceso inicial de Grafana es `admin` / `admin` y pide cambiar la contraseña. El dashboard muestra p95 HTTP, CPU del proceso JVM, hilos activos y conexiones HikariCP activas y pendientes. Mantén estas rutas expuestas solo en el entorno local de pruebas.
 
-## Experimento 2: capacidad y saturación
+Para abrir el dashboard web integrado de k6 durante una prueba, activa estas variables antes de ejecutar el comando:
 
-Por defecto ejecuta la carga creciente de VUs (10, 25, 50 y 100), manteniendo cada nivel durante un minuto:
+```powershell
+$env:K6_WEB_DASHBOARD = 'true'
+$env:K6_WEB_DASHBOARD_EXPORT = 'k6-report.html'
+k6 run --env BASE_URL=http://localhost:8081 pruebas/k6/experimento1.js
+```
+
+El dashboard de k6 se sirve en `http://localhost:5665`; el informe HTML se genera al terminar. Grafana/Prometheus permiten correlacionar esa carga con métricas del backend.
+
+Los experimentos 1–4 aplican el mismo límite de aceptación: p95 menor de 500 ms por operación y menos de 1 % de errores HTTP. En los ejecutores de llegada también se exige `dropped_iterations=0`.
+
+## Experimento 1: línea base de endpoints
 
 ```sh
-k6 run pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 pruebas/k6/experimento1.js
 ```
 
-También permite una tasa fija de iteraciones por segundo. Repite la ejecución con valores distintos de `RATE` para localizar el punto de degradación:
+Mide, en bloques separados de 2 minutos con 10 VUs, listado paginado, búsqueda de duplicados y detalle. Obtiene un UUID existente en `setup()` para que el endpoint de detalle no dependa de un identificador inventado. Ejecuta el script tres veces y conserva p50, p95, p99, tasa de peticiones y errores de cada operación.
+
+## Experimento 2: capacidad y punto de degradación
+
+El perfil por defecto conserva la línea de VUs 10, 25, 50 y 100:
 
 ```sh
-k6 run --env MODE=constant --env RATE=10 pruebas/k6/experimento2.js
-k6 run --env MODE=constant --env RATE=25 pruebas/k6/experimento2.js
-k6 run --env MODE=constant --env RATE=50 pruebas/k6/experimento2.js
-k6 run --env MODE=constant --env RATE=100 pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 pruebas/k6/experimento2.js
 ```
 
-El modo `ramping` explora una tasa de llegada que sube progresivamente de 10 a 100 iteraciones por segundo:
+Para localizar el punto de degradación, sube la tasa de llegada progresivamente. El conjunto comparativo de esta entrega usa una duración de un minuto, 800 VUs preasignados y hasta 2.000 VUs:
 
 ```sh
-k6 run --env MODE=ramping pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=constant --env RATE=500 --env PREALLOCATED_VUS=800 --env MAX_VUS=2000 --env DURATION=1m pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=constant --env RATE=600 --env PREALLOCATED_VUS=800 --env MAX_VUS=2000 --env DURATION=1m pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=constant --env RATE=700 --env PREALLOCATED_VUS=800 --env MAX_VUS=2000 --env DURATION=1m pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=constant --env RATE=750 --env PREALLOCATED_VUS=800 --env MAX_VUS=2000 --env DURATION=1m pruebas/k6/experimento2.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=constant --env RATE=800 --env PREALLOCATED_VUS=800 --env MAX_VUS=2000 --env DURATION=1m pruebas/k6/experimento2.js
 ```
 
-En los modos por tasa se controlan los `dropped_iterations`; si no hay VUs disponibles para iniciar las iteraciones solicitadas, el threshold falla. Ajusta `PREALLOCATED_VUS`, `MAX_VUS` y `DURATION` con `--env` según la máquina disponible. Usa la misma base de datos y configuración en todas las ejecuciones y repite cada configuración al menos tres veces. No se fija un umbral de latencia arbitrario: identifica la degradación a partir de los resultados observados.
-
-## Experimento 3: pico de emergencias urbanas
+Ejecuta cada tasa al menos tres veces y conserva la misma máquina, datos y duración. Una ejecución puede terminar con código 99 cuando ha recopilado resultados pero uno o más umbrales no se cumplen; eso identifica el nivel de carga que incumple el SLO. También se puede explorar el modelo cerrado con más VUs y sin tiempo de espera:
 
 ```sh
-k6 run pruebas/k6/experimento3.js
+k6 run --env BASE_URL=http://localhost:8081 --env MODE=vus --env VUS_LEVELS=100,200,400,800 --env SLEEP_SECONDS=0 --env RAMP_SECONDS=30 --env HOLD_SECONDS=60 pruebas/k6/experimento2.js
 ```
 
-Simula un episodio de lluvias intensas en Málaga durante 3 minutos y 30 segundos combinando dos escenarios concurrentes:
+`dropped_iterations` cuenta las iteraciones de un ejecutor de tasa que estaban planificadas pero no pudieron empezar porque k6 no tenía VUs libres. Un valor distinto de cero significa que no se aplicó toda la carga solicitada; aquí se exige cero y se amplían `preAllocatedVUs`/`maxVUs` para evitar que el generador sea el límite.
 
-1. `consulta_mapa`: tráfico constante de 30 VUs consultando `GET /api/incidents?page=0&size=50&sort=-createdAt`.
-2. `pico_incidencias`: ráfaga mediante `ramping-arrival-rate` que sube de 2 a 60 iteraciones/s de creación (`POST /api/incidents`) y vuelve a 2 iteraciones/s para medir la recuperación.
-
-En la fase `setup()`, el script inicia sesión con el usuario de prueba `juan.perez@ciudadano.es` (`contrasenasegura123`) y obtiene el token `XSRF-TOKEN` desde `/api/auth/csrf` para reutilizar la sesión autenticada en todas las peticiones `POST`. Se pueden ajustar `MAP_VUS`, `SPIKE_RATE`, `PREALLOCATED_VUS` y `MAX_VUS` mediante `--env`.
-
-Este experimento inserta incidencias reales en PostgreSQL y no las elimina al terminar. Con la configuración por defecto puede crear alrededor de 5.500 filas; guarda una copia de la base antes de ejecutarlo o usa una base aislada.
-
-## Experimento 4: volumen de datos e indexación
+## Experimento 3: pico de incidencias y efecto del mapa
 
 ```sh
-k6 run pruebas/k6/experimento4.js
+k6 run --env BASE_URL=http://localhost:8081 --env MAP_VUS=30 --env BASELINE_RATE=5 --env SPIKE_RATE=800 --env RECOVERY_RATE=5 --env PRELUDE_SECONDS=10 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=10 --env SPIKE_HOLD_SECONDS=15 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
 ```
 
-Ejecuta secuencialmente cuatro escenarios con 15 VUs durante 1 minuto cada uno (autenticando el usuario operador y obteniendo CSRF en `setup()`):
+El escenario registra por separado la fase previa (`pre-pico`), el pico (`pico`) y la recuperación (`recuperacion`). La tasa máxima debe fijarse por encima del primer nivel degradado del experimento 2. Para la ejecución de control, se usa el mismo perfil y se desactiva solo el tráfico de mapa:
 
-1. `consulta_filtrada`: `GET /api/incidents?status=REPORTED&category=STREET&page=0&size=20&sort=-createdAt`
-2. `paginacion_profunda`: `GET /api/incidents?page=50&size=20&sort=-createdAt`
-3. `consulta_analitica`: `GET /api/analytics/summary` (agregados calculados desde PostgreSQL; requiere rol operador, administrador o analista)
-4. `escritura_concurrente`: `POST /api/incidents`
-
-El intervalo entre escenarios es de 5 segundos. Se pueden reducir las pruebas funcionales con `--env VUS=1 --env STAGE_SECONDS=5`; cada bloque usa 5 segundos y el informe calcula el throughput por operación como el número de peticiones dividido por los segundos del bloque. La configuración por defecto puede crear alrededor de 900 incidencias en el último bloque. Las escrituras permanecen en PostgreSQL al terminar, así que ejecuta el test en una base aislada o limpia las filas sintéticas antes de repetirlo.
-
-`GET /api/opendata/incidents` no sirve para medir el efecto del volumen o de los índices de `incidents`: el backend carga ese recurso desde un CSV estático incluido en el proyecto.
-
-Las escrituras de este escenario son persistentes. Para comparar volúmenes o índices, restaura una copia de PostgreSQL con el mismo número de filas antes de **cada** ejecución; si se repite el script sin restaurar, el bloque `POST` añade alrededor de 900 filas por pasada y las mediciones dejan de ser comparables. Prepara una copia para cada condición: volumen base, volumen ampliado e índices.
-
-Para comparar distintos volúmenes y medir el efecto de la indexación en PostgreSQL:
-
-1. Ejecuta el script tres veces sobre el volumen base y anota el recuento de filas en `incidents`.
-2. Inserta registros sintéticos hasta alcanzar ~100.000 incidencias y repite el script tres veces sin índices extra.
-3. Crea los índices sobre los campos filtrados y ordenados, actualiza estadísticas y repite tres veces:
-
-```sql
-CREATE INDEX idx_incidents_status_category_created ON incidents (status, category, created_at DESC);
-CREATE INDEX idx_incidents_created_at ON incidents (created_at DESC);
-ANALYZE incidents;
+```sh
+k6 run --env BASE_URL=http://localhost:8081 --env INCLUDE_MAP=false --env BASELINE_RATE=5 --env SPIKE_RATE=800 --env RECOVERY_RATE=5 --env PRELUDE_SECONDS=10 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=10 --env SPIKE_HOLD_SECONDS=15 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
 ```
 
-4. Al terminar, restaura la copia base para quitar los índices y las filas sintéticas, o elimina los índices adicionales (`DROP INDEX IF EXISTS idx_incidents_status_category_created, idx_incidents_created_at;`) y restaura también el conjunto de filas original.
+Ejecuta tres pasadas con mapa y tres de control. Restaura el mismo volumen de incidencias antes de cada pasada; este script crea incidencias reales y no las borra.
+
+## Experimento 4: volumen, índices y modificaciones
+
+Este experimento mide filtrado, paginación profunda y agregados de PostgreSQL. En paralelo mantiene una carga menor que crea incidencias y modifica su estado mediante `PATCH /api/incidents/{id}`. Todas las operaciones tienen métricas y umbrales separados.
+
+Para mantener intacta la base de desarrollo, crea una base desechable una sola vez:
+
+```sh
+docker compose exec -T postgres createdb -U postgres -T template0 urbanpulse_k6
+```
+
+Inicia una instancia del backend en el puerto 8081 apuntando a esa base. Spring Boot crea el esquema y los usuarios de prueba al arrancar; después aplica el script SQL, que vacía las tablas de incidencias relacionadas y las rellena con el tamaño solicitado. El script se protege para ejecutarse solo contra `urbanpulse_k6`.
+
+```powershell
+docker compose cp pruebas/k6/sql/seed-volume.sql postgres:/tmp/seed-volume.sql
+docker compose exec -T postgres psql -U postgres -d urbanpulse_k6 -v target_rows=1000 -f /tmp/seed-volume.sql
+```
+
+Repite el proceso con `target_rows=10000`, `100000` y `1000000`. Para **cada** repetición se debe volver a sembrar el tamaño exacto porque la carga concurrente crea incidencias. Ejecuta tres pasadas por tamaño sin índices adicionales y otras tres con los índices:
+
+```powershell
+docker compose cp pruebas/k6/sql/drop-indexes.sql postgres:/tmp/drop-indexes.sql
+docker compose exec -T postgres psql -U postgres -d urbanpulse_k6 -f /tmp/drop-indexes.sql
+docker compose cp pruebas/k6/sql/create-indexes.sql postgres:/tmp/create-indexes.sql
+docker compose exec -T postgres psql -U postgres -d urbanpulse_k6 -f /tmp/create-indexes.sql
+```
+
+Los índices comparados corresponden a los predicados reales de `IncidentService`: el filtro transforma la categoría con `lower(category)`, por eso se usa el índice funcional `(status, lower(category), created_at DESC)` junto al índice `(created_at DESC)` para ordenar y recorrer la paginación profunda. El script `explain-volume.sql` compara el plan de las consultas antes y después de crearlos. La carga se configura con `STAGE_SECONDS=30`, `VUS=15` y `WRITER_VUS=3` para acortar las repeticiones; se pueden aumentar para mediciones más largas.
+
+Para comprobar el plan de las dos consultas antes y después de crear los índices:
+
+```powershell
+docker compose cp pruebas/k6/sql/explain-volume.sql postgres:/tmp/explain-volume.sql
+docker compose exec -T postgres psql -U postgres -d urbanpulse_k6 -f /tmp/explain-volume.sql
+```
+
+En cada pasada, vuelve a cargar el tamaño de datos elegido antes de ejecutar k6. Repite el ciclo de sembrado y ejecución tres veces por tamaño y estado de indexación; así la escritura concurrente no hace que las pasadas posteriores empiecen con más filas.
+
+```sh
+k6 run --env BASE_URL=http://localhost:8081 --env STAGE_SECONDS=30 --env VUS=15 --env WRITER_VUS=3 pruebas/k6/experimento4.js
+```
+
+La carga de escritura y modificación es persistente. Al terminar, detén el backend de pruebas y elimina únicamente la base desechable:
+
+```sh
+docker compose exec -T postgres dropdb -U postgres --force urbanpulse_k6
+```
