@@ -51,7 +51,12 @@ Los experimentos 1–4 aplican el mismo límite de aceptación: p95 menor de 500
 k6 run --env BASE_URL=http://localhost:8081 pruebas/k6/experimento1.js
 ```
 
-Mide, en bloques separados de 2 minutos con 10 VUs, listado paginado, búsqueda de duplicados y detalle. Obtiene un UUID existente en `setup()` para que el endpoint de detalle no dependa de un identificador inventado. Ejecuta el script tres veces y conserva p50, p95, p99, tasa de peticiones y errores de cada operación.
+Mide, en bloques separados de 2 minutos con 10 VUs, listado paginado, búsqueda de duplicados y detalle. Con el `sleep(1)` por defecto, el throughput lo marca la pausa (unas 10 req/s por operación). Para comparar el throughput real de cada operación, ejecuta la variante sin pausa:
+
+```sh
+k6 run --env BASE_URL=http://localhost:8081 --env SLEEP_SECONDS=0 --env DURATION_SECONDS=60 pruebas/k6/experimento1.js
+```
+ Obtiene un UUID existente en `setup()` para que el endpoint de detalle no dependa de un identificador inventado. Ejecuta el script tres veces y conserva p50, p95, p99, tasa de peticiones y errores de cada operación.
 
 ## Experimento 2: capacidad y punto de degradación
 
@@ -82,13 +87,13 @@ k6 run --env BASE_URL=http://localhost:8081 --env MODE=vus --env VUS_LEVELS=100,
 ## Experimento 3: pico de incidencias y efecto del mapa
 
 ```sh
-k6 run --env BASE_URL=http://localhost:8081 --env MAP_VUS=30 --env BASELINE_RATE=5 --env SPIKE_RATE=800 --env RECOVERY_RATE=5 --env PRELUDE_SECONDS=10 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=10 --env SPIKE_HOLD_SECONDS=15 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
+k6 run --env BASE_URL=http://localhost:8081 --env MAP_VUS=30 --env BASELINE_RATE=2 --env SPIKE_RATE=800 --env RECOVERY_RATE=2 --env PRELUDE_SECONDS=30 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=15 --env SPIKE_HOLD_SECONDS=75 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
 ```
 
-El escenario registra por separado la fase previa (`pre-pico`), el pico (`pico`) y la recuperación (`recuperacion`). La tasa máxima debe fijarse por encima del primer nivel degradado del experimento 2. Para la ejecución de control, se usa el mismo perfil y se desactiva solo el tráfico de mapa:
+El escenario registra por separado la fase previa (`pre-pico`), el pico (`pico`) y la recuperación (`recuperacion`), tanto para la creación como para la consulta del mapa: cada petición del mapa se etiqueta con la fase de creación que está en curso en ese momento (los 30 s de preludio cuentan como `pre-pico`). Estos son los parámetros del perfil documentado en `docs/resultados-k6.md`. La tasa máxima debe fijarse por encima del primer nivel degradado del experimento 2. Para la ejecución de control, se usa el mismo perfil y se desactiva solo el tráfico de mapa:
 
 ```sh
-k6 run --env BASE_URL=http://localhost:8081 --env INCLUDE_MAP=false --env BASELINE_RATE=5 --env SPIKE_RATE=800 --env RECOVERY_RATE=5 --env PRELUDE_SECONDS=10 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=10 --env SPIKE_HOLD_SECONDS=15 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
+k6 run --env BASE_URL=http://localhost:8081 --env INCLUDE_MAP=false --env BASELINE_RATE=2 --env SPIKE_RATE=800 --env RECOVERY_RATE=2 --env PRELUDE_SECONDS=30 --env BASELINE_SECONDS=30 --env SPIKE_RAMP_SECONDS=15 --env SPIKE_HOLD_SECONDS=75 --env RECOVERY_SECONDS=75 --env PREALLOCATED_VUS=100 --env SPIKE_PREALLOCATED_VUS=800 --env MAX_VUS=2000 pruebas/k6/experimento3.js
 ```
 
 Ejecuta tres pasadas con mapa y tres de control. Restaura el mismo volumen de incidencias antes de cada pasada; este script crea incidencias reales y no las borra.
@@ -109,6 +114,8 @@ Inicia una instancia del backend en el puerto 8081 apuntando a esa base. Spring 
 docker compose cp pruebas/k6/sql/seed-volume.sql postgres:/tmp/seed-volume.sql
 docker compose exec -T postgres psql -U postgres -d urbanpulse_k6 -v target_rows=1000 -f /tmp/seed-volume.sql
 ```
+
+Si ejecutas estos comandos desde Git Bash en lugar de PowerShell, antepón `MSYS_NO_PATHCONV=1`: si no, Git Bash convierte `/tmp/seed-volume.sql` en una ruta de Windows, `psql` no encuentra el fichero y la base se queda sin sembrar. Comprueba siempre el volumen con `SELECT count(*) FROM incidents;` antes de lanzar k6.
 
 Repite el proceso con `target_rows=10000`, `100000` y `1000000`. Para **cada** repetición se debe volver a sembrar el tamaño exacto porque la carga concurrente crea incidencias. Ejecuta tres pasadas por tamaño sin índices adicionales y otras tres con los índices:
 

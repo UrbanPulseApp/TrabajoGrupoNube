@@ -6,9 +6,14 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const DURATION_SECONDS = Number(__ENV.DURATION_SECONDS || 120);
 const STAGE_DURATION = `${DURATION_SECONDS}s`;
 const STAGE_SPACING_SECONDS = DURATION_SECONDS + 2;
+// SLEEP_SECONDS=0 removes think time so throughput depends on latency, not on sleep().
+const SLEEP_SECONDS = Number(__ENV.SLEEP_SECONDS ?? 1);
 
 if (!Number.isInteger(DURATION_SECONDS) || DURATION_SECONDS < 1) {
     throw new Error('DURATION_SECONDS debe ser un entero positivo.');
+}
+if (!Number.isFinite(SLEEP_SECONDS) || SLEEP_SECONDS < 0) {
+    throw new Error('SLEEP_SECONDS debe ser un número mayor o igual que 0.');
 }
 
 const operationMetrics = {
@@ -71,6 +76,12 @@ export const options = {
     },
 };
 
+function thinkTime() {
+    if (SLEEP_SECONDS > 0) {
+        sleep(SLEEP_SECONDS);
+    }
+}
+
 export function setup() {
     const response = http.get(
         `${BASE_URL}/api/incidents?page=0&size=1&sort=-createdAt`,
@@ -95,7 +106,7 @@ export function listadoIncidencias() {
     );
     recordOperation('listado', response);
     check(response, { 'listado de incidencias responde 200': (r) => r.status === 200 });
-    sleep(1);
+    thinkTime();
 }
 
 export function busquedaDuplicados() {
@@ -105,7 +116,7 @@ export function busquedaDuplicados() {
     );
     recordOperation('duplicados', response);
     check(response, { 'búsqueda de duplicados responde 200': (r) => r.status === 200 });
-    sleep(1);
+    thinkTime();
 }
 
 export function detalleIncidencia(data) {
@@ -115,5 +126,5 @@ export function detalleIncidencia(data) {
     );
     recordOperation('detalle', response);
     check(response, { 'detalle de incidencia responde 200': (r) => r.status === 200 });
-    sleep(1);
+    thinkTime();
 }
