@@ -26,3 +26,5 @@ La API usa sesiones HttpOnly y protección CSRF. En producción debe servirse de
 Las evidencias se guardan en `uploads/attachments` relativo al directorio desde el que se inicia el backend. Configura `ATTACHMENTS_DIRECTORY` con una ruta persistente, móntala con permisos de escritura y respalda sus archivos junto con PostgreSQL. La base de datos y el almacén de adjuntos se respaldan por separado.
 
 Las operaciones de cambio de estado y asignación están protegidas por rol.
+
+Spring Boot Actuator solo expone `/actuator/health` (sin detalles), útil para las comprobaciones de disponibilidad del contenedor o del balanceador. El resto de rutas `/actuator/**` exige rol `ADMIN`. No actives el perfil `k6` en producción: publica sin autenticación las métricas para Prometheus y solo está pensado para las pruebas de carga locales ([ADR-13](adr/ADR-13-observabilidad-local-actuator-prometheus.md)).

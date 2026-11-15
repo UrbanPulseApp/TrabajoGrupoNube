@@ -3,6 +3,7 @@ package com.urbanpulse.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.urbanpulse.dto.ApiError;
 import com.urbanpulse.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,14 +32,25 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    /**
+     * Actuator endpoints that reveal internal metrics. They are anonymous only when the
+     * local load-testing profile enables {@code urbanpulse.observability.public-metrics}.
+     */
+    private static final String[] METRICS_ENDPOINTS = {
+            "/actuator/info", "/actuator/metrics", "/actuator/metrics/**", "/actuator/prometheus"
+    };
+
     private final UserService userService;
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
+    private final boolean publicMetrics;
 
-    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder) {
+    public SecurityConfiguration(UserService userService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder,
+                                 @Value("${urbanpulse.observability.public-metrics:false}") boolean publicMetrics) {
         this.userService = userService;
         this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
+        this.publicMetrics = publicMetrics;
     }
 
     @Bean
@@ -85,7 +97,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/actuator/health", "/actuator/info", "/actuator/metrics", "/actuator/prometheus").permitAll()
+                .antMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                .antMatchers(METRICS_ENDPOINTS).access(publicMetrics ? "permitAll" : "hasRole('ADMIN')")
+                .antMatchers("/actuator/**").hasRole("ADMIN")
                 .antMatchers("/api/auth/csrf", "/api/auth/login", "/api/users/**").permitAll()
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/incidents", "/api/incidents/*",

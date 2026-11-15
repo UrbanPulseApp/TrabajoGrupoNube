@@ -20,6 +20,7 @@ UrbanPulse está diseñado como una **aplicación monolítica modular** basada e
 | **Seguridad** | Spring Security | Autenticación, autorización por rol, contraseñas con BCrypt, sesiones `HttpOnly` y protección CSRF. |
 | **Documentación de la API** | springdoc-openapi (OpenAPI 3 / Swagger UI) | Genera y expone la especificación OpenAPI del contrato REST. |
 | **Integraciones Externas** | Adapter Pattern | Comunicación resiliente con servicios de geolocalización y entorno urbano (clima, tráfico). |
+| **Observabilidad** | Spring Boot Actuator + Micrometer Prometheus | `health` público en todos los entornos; métricas para Prometheus y Grafana solo con el perfil local `k6` ([ADR-13](adr/ADR-13-observabilidad-local-actuator-prometheus.md)). |
 
 ---
 

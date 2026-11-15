@@ -16,9 +16,10 @@ El backend usa por defecto `jdbc:postgresql://localhost:5432/urbanpulse` y escuc
 
 ## Observabilidad con Prometheus y Grafana
 
-El backend incorpora Spring Boot Actuator y Micrometer Prometheus. Para probar sin detener la instancia habitual, se puede iniciar una segunda instancia en el puerto 8081; ajusta `DATABASE_URL` si quieres medir otra base:
+El backend incorpora Spring Boot Actuator y Micrometer Prometheus. Por seguridad, la configuración por defecto solo expone `/actuator/health`; las métricas para Prometheus se activan con el perfil `k6` (ver [ADR-13](../../docs/adr/ADR-13-observabilidad-local-actuator-prometheus.md)). Para probar sin detener la instancia habitual, se puede iniciar una segunda instancia en el puerto 8081 con ese perfil; ajusta `DATABASE_URL` si quieres medir otra base:
 
 ```powershell
+$env:SPRING_PROFILES_ACTIVE = 'k6'
 $env:PORT = '8081'
 $env:DATABASE_URL = 'jdbc:postgresql://localhost:5432/urbanpulse'
 cd backend
@@ -31,7 +32,7 @@ En otra terminal, inicia Prometheus y Grafana:
 docker compose --profile observability up -d postgres prometheus grafana
 ```
 
-Prometheus recoge métricas de `http://localhost:8081/actuator/prometheus` cada 5 segundos. La URL del dashboard provisionado es [`http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance`](http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance); el acceso inicial de Grafana es `admin` / `admin` y pide cambiar la contraseña. El dashboard muestra p95 HTTP, CPU del proceso JVM, hilos activos y conexiones HikariCP activas y pendientes. Mantén estas rutas expuestas solo en el entorno local de pruebas.
+Prometheus recoge métricas de `http://localhost:8081/actuator/prometheus` cada 5 segundos. La URL del dashboard provisionado es [`http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance`](http://localhost:3000/d/urbanpulse-performance/urbanpulse-performance); el acceso inicial de Grafana es `admin` / `admin` y pide cambiar la contraseña. El dashboard muestra p95 HTTP, CPU del proceso JVM, hilos activos y conexiones HikariCP activas y pendientes. Si el panel aparece vacío, comprueba que la instancia del puerto 8081 se arrancó con `SPRING_PROFILES_ACTIVE=k6`: sin ese perfil, `/actuator/prometheus` responde 401. No actives el perfil `k6` en despliegues accesibles desde fuera de la máquina local.
 
 Para abrir el dashboard web integrado de k6 durante una prueba, activa estas variables antes de ejecutar el comando:
 
@@ -103,7 +104,7 @@ Para mantener intacta la base de desarrollo, crea una base desechable una sola v
 docker compose exec -T postgres createdb -U postgres -T template0 urbanpulse_k6
 ```
 
-Inicia una instancia del backend en el puerto 8081 apuntando a esa base. Spring Boot crea el esquema y los usuarios de prueba al arrancar; después aplica el script SQL, que vacía las tablas de incidencias relacionadas y las rellena con el tamaño solicitado. El script se protege para ejecutarse solo contra `urbanpulse_k6`.
+Inicia una instancia del backend en el puerto 8081 con el perfil `k6` apuntando a esa base (`$env:DATABASE_URL = 'jdbc:postgresql://localhost:5432/urbanpulse_k6'`). Spring Boot crea el esquema y los usuarios de prueba al arrancar; después aplica el script SQL, que vacía las tablas de incidencias relacionadas y las rellena con el tamaño solicitado. El script se protege para ejecutarse solo contra `urbanpulse_k6`.
 
 ```powershell
 docker compose cp pruebas/k6/sql/seed-volume.sql postgres:/tmp/seed-volume.sql
