@@ -24,7 +24,7 @@
   - El backend es un monolito con una sola instancia; la sesión en memoria del servidor es suficiente.
 
 - **Restricciones (Constraints):** 
-  - `initial-data.json` contiene contraseñas de prueba en claro y **solo sirve para desarrollo y pruebas**. Ahora mismo `DatabaseDataLoader` lo carga siempre que la tabla de usuarios esté vacía, también en una base de producción recién creada. Mientras esa carga no se condicione a un perfil o propiedad, en cualquier entorno compartido o desplegado hay que crear antes el administrador con `BootstrapAdmin` y revisar que no existan las cuentas de prueba.
+  - `initial-data.json` contiene contraseñas de prueba en claro y **solo sirve para desarrollo y pruebas**. `DatabaseDataLoader` lo carga siempre que la tabla de usuarios esté vacía. Es aceptable en el alcance actual: UrbanPulse es un proyecto académico que no se despliega en producción.
   - Escalar horizontalmente obligaría a compartir las sesiones (por ejemplo, Spring Session con Redis o JDBC) o a migrar a tokens.
   - Cualquier endpoint nuevo debe tener su regla en `SecurityConfiguration` y su control de visibilidad por rol en React (`AuthContext`).
 
@@ -40,7 +40,7 @@
 - **Implicaciones (Implications):** 
   - Los clientes (frontend, k6) tienen que obtener primero `GET /api/auth/csrf`, enviar `credentials: 'include'` y adjuntar `X-XSRF-TOKEN` en las escrituras (`frontend/src/services/ApiClient.js`, `pruebas/k6/lib/auth.js`).
   - Las pruebas de seguridad se escriben con `@WithMockUser(roles = ...)` (por ejemplo, `AnalyticsControllerTest`).
-  - En producción no se debe cargar `initial-data.json` (aviso en `docs/deployment.md`). Queda pendiente condicionar `DatabaseDataLoader` a un perfil de desarrollo para que no dependa del procedimiento manual.
+  - **Mejora futura (fuera del alcance de la asignatura):** si el proyecto continúa y llega a desplegarse, condicionar `DatabaseDataLoader` a un perfil o propiedad de desarrollo para que no cree las cuentas de prueba en una base nueva (aviso en `docs/deployment.md`).
 
 - **Decisiones relacionadas (Related decisions):** 
   - *ADR-02:* Uso de Spring Boot y API REST en el Backend.
