@@ -1,0 +1,57 @@
+{
+  "id": null,
+  "uid": "urbanpulse-performance",
+  "title": "UrbanPulse — rendimiento local",
+  "tags": ["urbanpulse", "k6", "prometheus"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU del proceso JVM",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [{ "expr": "process_cpu_usage{application=\"urbanpulse-backend\"}", "legendFormat": "CPU" }]
+    },
+    {
+      "id": 2,
+      "title": "Hilos JVM activos",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [{ "expr": "jvm_threads_live_threads{application=\"urbanpulse-backend\"}", "legendFormat": "Hilos" }]
+    },
+    {
+      "id": 3,
+      "title": "Conexiones HikariCP activas",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [{ "expr": "hikaricp_connections_active{application=\"urbanpulse-backend\"}", "legendFormat": "Activas" }]
+    },
+    {
+      "id": 4,
+      "title": "Solicitudes pendientes de conexión HikariCP",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [{ "expr": "hikaricp_connections_pending{application=\"urbanpulse-backend\"}", "legendFormat": "Pendientes" }]
+    },
+    {
+      "id": 5,
+      "title": "Latencia p95 HTTP (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"urbanpulse-backend\",uri!~\"/actuator.*\"}[1m])) by (le, method, uri)) * 1000", "legendFormat": "{{method}} {{uri}}" }]
+    }
+  ],
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false
+}
