@@ -21,7 +21,7 @@ El frontend es una SPA con rutas del navegador (`/incidencias/:id`, `/reportar`,
 
 ## Despliegue y seguridad
 
-La API usa sesiones HttpOnly y protección CSRF. En producción debe servirse detrás de HTTPS para proteger las credenciales y cookies durante el transporte. Configura un administrador inicial mediante secretos de entorno; no guardes esas credenciales en Git ni dejes cuentas predeterminadas.
+La API usa sesiones HttpOnly y protección CSRF. En producción debe servirse detrás de HTTPS para proteger las credenciales y cookies durante el transporte. Configura un administrador inicial mediante secretos de entorno; no guardes esas credenciales en Git ni dejes cuentas predeterminadas. Ten en cuenta que, si la tabla de usuarios está vacía al arrancar, el backend carga los usuarios de prueba de `data/initial-data.json`, cuyas contraseñas están en el repositorio: en un entorno desplegado, comprueba que esas cuentas no existen o desactívalas ([ADR-12](adr/ADR-12-autenticacion-multirol-bcrypt-rbac.md)).
 
 Las evidencias se guardan en `uploads/attachments` relativo al directorio desde el que se inicia el backend. Configura `ATTACHMENTS_DIRECTORY` con una ruta persistente, móntala con permisos de escritura y respalda sus archivos junto con PostgreSQL. La base de datos y el almacén de adjuntos se respaldan por separado.
 
