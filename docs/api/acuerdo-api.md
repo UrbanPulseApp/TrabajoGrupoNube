@@ -1,6 +1,6 @@
 # Diseño de API REST - UrbanPulse
 
-La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan **sesión web (cookie `HttpOnly`)** y requieren el **token CSRF**, salvo `POST /api/auth/login` y `POST /api/auth/logout`, que están exentos. Todas las entidades principales (`Incident`, `User`, `Assignment`, `Attachment`, `StatusChange`, `Notification`) se identifican mediante **`UUID` opacos**.
+La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. Las fechas aceptan ISO-8601. Las operaciones de escritura usan **sesión web (cookie `HttpOnly`)** y requieren el **token CSRF**, salvo `POST /api/auth/login` y `POST /api/auth/logout`, que están exentos. Todas las entidades principales (`Incident`, `User`, `Assignment`, `Attachment`, `StatusChange`, `Notification`) se identifican mediante **`UUID` opacos** ([ADR-10](../adr/ADR-10-estandarizacion-identificadores-uuid-idor.md)).
 
 ## 0. Principios generales
 
@@ -31,7 +31,7 @@ La API entrega JSON, utiliza DTOs y responde con el formato común `ApiError`. L
 
 Las contraseñas se guardan con **BCrypt**. La cookie de sesión es **`HttpOnly`**; la cookie `XSRF-TOKEN` permite al frontend adjuntar el token CSRF. El primer administrador se crea al iniciar el backend cuando están definidas `URBANPULSE_ADMIN_EMAIL` y `URBANPULSE_ADMIN_PASSWORD`. No se usan credenciales predeterminadas.
 
-Roles disponibles: `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN` y `ANALYST`. El registro público siempre crea `CITIZEN`; solo `ADMIN` puede asignar otros roles.
+Roles disponibles: `CITIZEN`, `OPERATOR`, `TECHNICIAN`, `ADMIN` y `ANALYST`. El registro público siempre crea `CITIZEN`; solo `ADMIN` puede asignar otros roles ([ADR-12](../adr/ADR-12-autenticacion-multirol-bcrypt-rbac.md)).
 
 ## 3. Permisos
 
@@ -62,7 +62,7 @@ Las respuestas públicas no incluyen correos, contraseñas ni el identificador d
 | `GET /api/incidents/{id}/status-changes` | Devuelve el historial cronológico. |
 
 Ejemplo de listado: `GET /api/incidents?status=REPORTED&q=farola&page=0&size=10&sort=-createdAt`.
-Ejemplo de duplicados: `GET /api/incidents/duplicates?latitude=36.7185&longitude=-4.4205&category=CALZADA&radiusMeters=50`.
+Ejemplo de duplicados: `GET /api/incidents/duplicates?latitude=36.7185&longitude=-4.4205&category=CALZADA&radiusMeters=50`. El cálculo (prefiltrado por *bounding box* y distancia Haversine) se justifica en [ADR-11](../adr/ADR-11-deteccion-preventiva-incidencias-duplicadas.md).
 
 El `PATCH` recibe `{"status":"VALIDATED","reason":"Datos suficientes"}`. `reason` es obligatorio para `REJECTED`. Transiciones admitidas: `REPORTED → VALIDATED/REJECTED`, `VALIDATED → ASSIGNED/REJECTED`, `ASSIGNED → IN_PROGRESS/VALIDATED`, `IN_PROGRESS → RESOLVED`, `RESOLVED → CLOSED/REOPENED` y `REOPENED → ASSIGNED/IN_PROGRESS`.
 

@@ -17,7 +17,7 @@ UrbanPulse está diseñado como una **aplicación monolítica modular** basada e
 | **Lógica de negocio** | Servicios (`*Service`) | Reglas de dominio: ciclo de vida de incidencias, asignaciones, evidencias, notificaciones y analítica. |
 | **Capa de Persistencia** | Spring Data JPA / Hibernate | Mapeo objeto-relacional y consultas a la base de datos. |
 | **Base de Datos** | PostgreSQL 16 | Persistencia relacional de usuarios, incidencias, asignaciones, adjuntos, notificaciones y roles. |
-| **Seguridad** | Spring Security | Autenticación, autorización por rol, contraseñas con BCrypt, sesiones `HttpOnly` y protección CSRF. |
+| **Seguridad** | Spring Security | Autenticación, autorización por rol, contraseñas con BCrypt, sesiones `HttpOnly` y protección CSRF ([ADR-12](adr/ADR-12-autenticacion-multirol-bcrypt-rbac.md)); identificadores `UUID` opacos contra IDOR ([ADR-10](adr/ADR-10-estandarizacion-identificadores-uuid-idor.md)). |
 | **Documentación de la API** | springdoc-openapi (OpenAPI 3 / Swagger UI) | Genera y expone la especificación OpenAPI del contrato REST. |
 | **Integraciones Externas** | Adapter Pattern | Comunicación resiliente con servicios de geolocalización y entorno urbano (clima, tráfico). |
 | **Observabilidad** | Spring Boot Actuator + Micrometer Prometheus | `health` público en todos los entornos; métricas para Prometheus y Grafana solo con el perfil local `k6` ([ADR-13](adr/ADR-13-observabilidad-local-actuator-prometheus.md)). |
