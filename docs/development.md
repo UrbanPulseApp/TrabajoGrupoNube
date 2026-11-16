@@ -106,6 +106,13 @@ mvn clean verify
 
 `mvn verify` compila el proyecto, ejecuta las pruebas y realiza las comprobaciones de validación configuradas en el `pom.xml`.
 
+Los tests necesitan el PostgreSQL de `docker compose up -d`, pero **no escriben en tus datos de desarrollo** (ADR-14):
+
+* Se ejecutan con el perfil `test` (`backend/src/test/resources/application-test.properties`), que usa el esquema `urbanpulse_test` dentro de la base `urbanpulse`. El esquema se crea solo; la aplicación sigue usando `public`.
+* Los tests que crean incidencias o asignaciones llevan `@Transactional` y se revierten al terminar.
+* Si añades un test `@SpringBootTest`, declara siempre `@ActiveProfiles("test")`, y `@Transactional` si escribe datos.
+* Puedes borrar el esquema de test cuando quieras con `DROP SCHEMA urbanpulse_test CASCADE;`; se recrea en la siguiente ejecución.
+
 > La **integración continua** (`.github/workflows/ci.yml`) ejecuta exactamente `mvn -B verify --file backend/pom.xml` en cada Pull Request hacia `main`, levantando un PostgreSQL 16 como servicio y usando **JDK 11**. Si en local pasa `mvn verify` con JDK 11, debería pasar en CI.
 
 ---
