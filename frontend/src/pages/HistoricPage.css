@@ -1,3 +1,37 @@
+/* Histórico: panel lateral con el ranking de tipos y el mapa a la derecha (miles de puntos de GECOR) */
+.historic {
+  display: grid; grid-template-columns: 400px minmax(0, 1fr);
+  height: calc(100dvh - var(--topbar-h)); min-height: 480px; position: relative;
+}
+.historic-panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line-strong); }
+.historic-head { display: grid; gap: 12px; padding: 18px 18px 14px; border-bottom: 1px solid var(--line); }
+.historic-title h1 { font-size: 1.375rem; letter-spacing: -0.03em; }
+.historic-count { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 20px; color: var(--muted); font-family: var(--font-mono); font-size: 0.75rem; }
+.historic-count .link-button { font-family: var(--font-body); font-size: 0.8125rem; }
+.historic-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.historic-map { min-width: 0; }
+.historic-toggle { display: none; }
+.historic .map-legend { left: auto; right: 10px; bottom: 26px; }
+
+@media (max-width: 899px) {
+  .historic {
+    grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h) - env(safe-area-inset-bottom));
+  }
+  .historic-panel { display: contents; }
+  .historic-head { grid-row: 1; padding: 12px 14px 10px; gap: 10px; background: var(--surface); border-bottom: 1px solid var(--line-strong); }
+  .historic-title h1 { font-size: 1.15rem; }
+  .historic-body { grid-row: 2; background: var(--surface); }
+  .historic-map { grid-row: 2; }
+  .historic[data-view="map"] .historic-body { display: none; }
+  .historic[data-view="list"] .historic-map { display: none; }
+  .historic-toggle {
+    display: inline-flex; position: absolute; z-index: 1000; left: 50%; translate: -50% 0; bottom: 16px;
+    box-shadow: var(--shadow-float); border-radius: var(--r-md); min-height: 44px; padding: 0 18px;
+  }
+  .historic .map-preview { bottom: 72px; left: 10px; width: calc(100% - 20px); }
+}
+
 .historic-lead { color: var(--ink-2); font-size: 0.9rem; }
 .historic-section { padding: 18px; border-bottom: 1px solid var(--line); }
 .historic-section h2 { font-size: 1rem; margin-bottom: 12px; }
@@ -6,10 +40,10 @@
   position: relative; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
   min-height: 38px; padding: 6px 10px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; text-align: left; overflow: hidden;
 }
-.rank-bar { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-soft); border-radius: var(--r-sm); z-index: 0; transition: width 0.3s var(--ease); }
+.rank-bar { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-soft); border-radius: 1px; z-index: 0; transition: width 0.3s var(--ease); }
 .rank-name, .rank-row b { position: relative; z-index: 1; }
 .rank-name { font-size: 0.875rem; font-weight: 550; line-height: 1.25; }
-.rank-row b { font-weight: 700; font-size: 0.875rem; }
+.rank-row b { font-family: var(--font-mono); font-weight: 600; font-size: 0.8125rem; }
 .rank-row:hover { border-color: var(--brand); }
 .rank-row.is-active { border-color: var(--brand); }
 .rank-row.is-active .rank-bar { background: color-mix(in srgb, var(--brand) 38%, var(--surface)); }

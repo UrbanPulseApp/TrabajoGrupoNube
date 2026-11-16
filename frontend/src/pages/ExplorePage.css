@@ -1,45 +1,140 @@
+/* Exploración: panel superior compacto (una sola fila de herramientas + tira de avisos) y mapa a todo el ancho */
 .explore {
-  display: grid; grid-template-columns: 420px minmax(0, 1fr);
-  height: calc(100dvh - var(--topbar-h)); min-height: 480px; position: relative;
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  height: calc(100dvh - var(--topbar-h)); min-height: 520px; position: relative;
 }
-.explore-panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line); }
-.explore-head { display: grid; gap: 12px; padding: 18px 18px 12px; border-bottom: 1px solid var(--line); }
-.explore-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.explore-title h1 { font-size: 1.35rem; letter-spacing: -0.02em; }
-.explore-head .segmented { width: 100%; }
-.chip-row { display: flex; gap: 8px; overflow-x: auto; padding: 2px 18px 4px; margin: 0 -18px; scrollbar-width: none; }
-.chip-row::-webkit-scrollbar { display: none; }
-.explore-count { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 0.8125rem; font-weight: 600; min-height: 20px; }
-.explore-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.explore-more { padding: 16px; text-align: center; }
+.explore-panel {
+  position: relative; z-index: 950; display: grid; min-width: 0;
+  background: var(--surface); border-bottom: 1px solid var(--line-strong);
+}
+
+/* ---------- Fila de herramientas ---------- */
+.explore-head { display: flex; align-items: center; gap: 24px; padding: 14px 24px; min-width: 0; }
+.explore-title { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.explore-title h1 { font-size: 1.375rem; letter-spacing: -0.03em; }
+.explore-count { color: var(--muted); font-size: 0.8125rem; white-space: nowrap; }
+.explore-refresh { align-self: center; margin-left: -6px; color: var(--muted); }
+.explore-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 0 1 520px; min-width: 0; }
+.explore-search { flex: 1; min-width: 0; }
+.explore-search .input { min-height: 38px; padding-block: 7px; background: var(--surface-2); border-color: var(--line); }
+.explore-search .input:hover { border-color: var(--line-strong); }
+.explore-search .input:focus { background: var(--surface); }
+.explore-filter-btn { min-height: 38px; flex: none; }
+.explore-filter-btn.is-active { border-color: var(--ink); }
+.filter-badge {
+  min-width: 18px; height: 18px; padding: 0 5px; display: grid; place-items: center; border-radius: var(--r-sm);
+  background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+}
+
+/* ---------- Popover de filtros ---------- */
+.filters-popover {
+  width: min(380px, calc(100vw - 16px)); padding: 16px; display: grid; gap: 16px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-float);
+}
+.filters-popover:not(:popover-open) { display: none; }
+/* Sin anchor positioning: coordenadas fijas calculadas al abrir (ver ExplorePage.jsx) */
+@supports not (position-area: block-end) {
+  .filters-popover { position: fixed; inset: auto; margin: 0; }
+}
+@supports (position-area: block-end) {
+  .filters-popover {
+    inset: auto; margin: 6px 0 0;
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+.filters-group { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.filters-group legend {
+  padding: 0; margin-bottom: 8px; color: var(--muted);
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.filters-group .segmented { width: 100%; }
+.filters-categories { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8125rem;
+}
+.filters-foot .link-button:disabled { color: var(--muted); text-decoration: none; cursor: default; opacity: 0.6; }
+
+/* ---------- Tira horizontal de avisos ---------- */
+.explore-list { position: relative; min-width: 0; border-top: 1px solid var(--line); background: var(--surface-2); }
+.explore-list[hidden] { display: none; }
+.explore-track {
+  display: flex; align-items: stretch; overflow-x: auto; min-width: 0;
+  scroll-snap-type: x proximity; scroll-padding-inline: 24px;
+  overscroll-behavior-x: contain; scrollbar-width: none;
+  /* Bordes difuminados solo donde queda contenido por desplazar */
+  --fade-start: 48px; --fade-end: 48px;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+}
+.explore-track::-webkit-scrollbar { display: none; }
+.explore-track[data-start="true"] { --fade-start: 0px; }
+.explore-track[data-end="true"] { --fade-end: 0px; }
+@media (prefers-reduced-motion: no-preference) { .explore-track { scroll-behavior: smooth; } }
+.explore-track > ul { display: flex; gap: 12px; padding: 14px 24px 18px; }
+.explore-track .inc-card { flex: 0 0 304px; scroll-snap-align: start; }
+.explore-track .state-box { flex: 1; padding: 22px 20px; }
+.explore-more { display: grid; place-items: center; flex: none; padding: 14px 24px 18px 0; }
+
+/* Flechas: aparecen al pasar el ratón o con el foco dentro de la tira */
+.strip-arrow {
+  position: absolute; z-index: 2; top: 50%; translate: 0 -50%; width: 36px; height: 36px; display: grid; place-items: center;
+  border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-pop); opacity: 0; transition: opacity 0.15s, background 0.15s; touch-action: manipulation;
+}
+.strip-arrow.is-prev { left: 12px; }
+.strip-arrow.is-next { right: 12px; }
+.strip-arrow:hover { background: var(--sunken); }
+.strip-arrow:disabled { visibility: hidden; }
+.explore-list:hover .strip-arrow, .explore-list:focus-within .strip-arrow { opacity: 1; }
+@media (hover: none) { .strip-arrow { display: none; } }
+
+/* Pestaña para plegar el panel, apoyada en el borde del mapa */
+.explore-handle {
+  position: absolute; left: 50%; bottom: 0; translate: -50% 100%; z-index: 1;
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px;
+  border: 1px solid var(--line-strong); border-top: 0; border-radius: 0 0 var(--r-md) var(--r-md);
+  background: var(--surface); color: var(--ink-2); font-size: 0.75rem; font-weight: 650;
+  box-shadow: 0 4px 10px -4px rgb(8 28 25 / 0.25);
+}
+.explore-handle:hover { color: var(--ink); }
+
 .explore-map { min-width: 0; }
 .explore-toggle { display: none; }
 .map-empty-note {
-  position: absolute; z-index: 850; left: 50%; top: 14px; translate: -50% 0; padding: 8px 14px; border-radius: 999px;
-  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-pop); font-weight: 600; font-size: 0.875rem;
+  position: absolute; z-index: 850; left: 50%; top: 40px; translate: -50% 0; padding: 7px 12px; border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-pop); font-weight: 600; font-size: 0.875rem;
 }
 .explore .map-legend { left: auto; right: 10px; bottom: 26px; }
+.explore .map-tools { top: 10px; }
 
-/* ---------- Móvil: la cabecera es fija y se alterna lista / mapa ---------- */
+/* ---------- Móvil: cabecera fija y se alterna lista / mapa ---------- */
 @media (max-width: 899px) {
   .explore {
-    grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr);
     height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h) - env(safe-area-inset-bottom));
   }
   .explore-panel { display: contents; }
-  .explore-head { grid-row: 1; padding: 12px 14px 10px; gap: 10px; background: var(--surface); }
-  .explore-head .explore-title h1 { font-size: 1.15rem; }
-  .explore-head .segmented { display: none; }
-  .chip-row { padding-inline: 14px; margin-inline: -14px; }
-  .explore-list { grid-row: 2; background: var(--surface); }
+  .explore-head {
+    grid-row: 1; flex-wrap: wrap; gap: 10px; padding: 12px 14px;
+    background: var(--surface); border-bottom: 1px solid var(--line-strong);
+  }
+  .explore-title h1 { font-size: 1.15rem; }
+  .explore-tools { flex: 1 1 100%; margin-left: 0; }
+  .explore-handle, .strip-arrow { display: none; }
+  .explore-list, .explore-list[hidden] { grid-row: 2; display: flex; flex-direction: column; min-height: 0; border-top: 0; background: var(--surface); }
+  .explore-track { display: block; flex: 1; overflow-x: hidden; overflow-y: auto; scroll-snap-type: none; overscroll-behavior-y: contain; mask-image: none; }
+  .explore-track > ul { display: block; padding: 0; }
+  .explore-track .inc-card { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+  .explore-more { padding: 16px; }
   .explore-map { grid-row: 2; }
   .explore[data-view="map"] .explore-list { display: none; }
   .explore[data-view="list"] .explore-map { display: none; }
   .explore-toggle {
     display: inline-flex; position: absolute; z-index: 1000; left: 50%; translate: -50% 0; bottom: 16px;
-    box-shadow: var(--shadow-float); border-radius: 999px; min-height: 44px; padding: 0 20px;
+    box-shadow: var(--shadow-float); border-radius: var(--r-md); min-height: 44px; padding: 0 18px;
   }
   .explore .map-preview { bottom: 72px; left: 10px; width: calc(100% - 20px); }
   .explore .map-legend { display: none; }
-  .map-tools { top: 100px; }
+  .explore .map-empty-note { top: 14px; }
 }

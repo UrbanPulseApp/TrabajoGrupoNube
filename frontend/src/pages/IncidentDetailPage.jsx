@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, Clock, Copy, FileSearch, History, Info, Map as MapIcon, MapPinned, Navigation, Share2, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Clock, Copy, FileSearch, Map as MapIcon, Navigation, Share2, TriangleAlert } from "lucide-react";
 import {
   findDuplicateIncidents, getIncident, getIncidentAttachments, getIncidentContext, getIncidentStatusChanges,
 } from "../services/IncidentService.js";
@@ -138,24 +138,24 @@ export default function IncidentDetailPage() {
       <div className="detail-grid">
         <div className="detail-main">
           <section className="panel">
-            <h2 className="panel-title"><Info aria-hidden="true" /> Descripción</h2>
+            <h2 className="panel-title">Descripción</h2>
             <p className="detail-description">{incident.description}</p>
           </section>
 
           <section className="panel">
-            <h2 className="panel-title"><Camera aria-hidden="true" /> Evidencias {attachments.length > 0 && <span className="count-tag">{attachments.length}</span>}</h2>
+            <h2 className="panel-title">Evidencias {attachments.length > 0 && <span className="count-tag">{attachments.length}</span>}</h2>
             {extrasLoading ? <span className="skeleton" style={{ display: "block", height: 160 }} />
               : attachments.length === 0 ? <p className="field-hint">Este aviso no tiene fotos ni documentos adjuntos.</p>
                 : <Gallery incidentId={incident.id} attachments={attachments} />}
           </section>
 
           <section className="panel">
-            <h2 className="panel-title"><History aria-hidden="true" /> Historial</h2>
+            <h2 className="panel-title">Historial</h2>
             {extrasLoading ? <span className="skeleton" style={{ display: "block", height: 120 }} /> : <Timeline createdAt={incident.createdAt} changes={changes} />}
           </section>
 
           <section className="panel">
-            <h2 className="panel-title"><MapPinned aria-hidden="true" /> Contexto urbano</h2>
+            <h2 className="panel-title">Contexto urbano</h2>
             {extrasLoading ? <span className="skeleton" style={{ display: "block", height: 140 }} />
               : context ? <UrbanContextPanel context={context} /> : <p className="field-hint">No hay datos de contexto disponibles para esta ubicación.</p>}
           </section>
@@ -179,7 +179,7 @@ export default function IncidentDetailPage() {
 
           {nearby.length > 0 && (
             <section className="panel">
-              <h2 className="panel-title"><MapPinned aria-hidden="true" /> Otros avisos cerca</h2>
+              <h2 className="panel-title">Otros avisos cerca</h2>
               <ul className="nearby-list">
                 {nearby.map((item) => (
                   <li key={item.id}>

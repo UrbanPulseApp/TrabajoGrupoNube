@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Wrench } from "lucide-react";
 import {
   createIncidentAssignment,
   getIncidentAssignments,
@@ -78,7 +77,7 @@ export default function IncidentOperations({ incident, role, onChanged }) {
 
   return (
     <section className="panel ops-panel" aria-label="Gestión municipal">
-      <h2 className="panel-title"><Wrench aria-hidden="true" /> Gestión municipal <span className="role-tag">{ROLE_LABEL[role] || role}</span></h2>
+      <h2 className="panel-title">Gestión municipal <span className="role-tag">{ROLE_LABEL[role] || role}</span></h2>
 
       {canManage && nextStates.length > 0 && (
         <form className="ops-form" onSubmit={changeStatus}>

@@ -10,7 +10,6 @@ import MapSurface from "../components/map/MapSurface.jsx";
 import HistoricLayer from "../components/map/HistoricLayer.jsx";
 import StateBox from "../components/ui/StateBox.jsx";
 import "../components/incidents/incidents.css";
-import "./ExplorePage.css";
 import "./HistoricPage.css";
 
 const SOURCE_URL = "https://datosabiertos.malaga.eu/dataset/incidencias-resueltas-en-la-via-publica-para-el-ano-2026";
@@ -109,10 +108,10 @@ export default function HistoricPage() {
   const hasFilters = query || category || year;
 
   return (
-    <div className="explore historic" data-view={view}>
-      <aside className="explore-panel">
-        <div className="explore-head">
-          <div className="explore-title"><h1>Histórico municipal</h1></div>
+    <div className="historic" data-view={view}>
+      <aside className="historic-panel">
+        <div className="historic-head">
+          <div className="historic-title"><h1>Histórico municipal</h1></div>
           <p className="historic-lead">Incidencias ya resueltas por el Ayuntamiento de Málaga (sistema GECOR), publicadas como datos abiertos.</p>
           <div className="input-icon">
             <Search size={17} aria-hidden="true" />
@@ -124,13 +123,13 @@ export default function HistoricPage() {
               {years.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           )}
-          <p className="explore-count" aria-live="polite">
+          <p className="historic-count" aria-live="polite">
             {loading ? "Cargando datos…" : `${visible.length.toLocaleString("es-ES")} ${visible.length === 1 ? "incidencia resuelta" : "incidencias resueltas"}`}
             {!loading && hasFilters && <button type="button" className="link-button" onClick={() => { setQuery(""); setCategory(""); setYear(""); }}>Quitar filtros</button>}
           </p>
         </div>
 
-        <div className="explore-list historic-body">
+        <div className="historic-body">
           {error && <StateBox icon={TriangleAlert} title="No se pudo cargar el histórico" error>{error}</StateBox>}
           {loading && <div className="historic-section">{[0, 1, 2, 3, 4].map((key) => <span key={key} className="skeleton" style={{ display: "block", height: 34, marginBottom: 10 }} />)}</div>}
           {!loading && !error && (
@@ -166,7 +165,7 @@ export default function HistoricPage() {
         </div>
       </aside>
 
-      <section className={`explore-map map-stage ${selected ? "has-preview" : ""}`} aria-label="Mapa del histórico">
+      <section className={`historic-map map-stage ${selected ? "has-preview" : ""}`} aria-label="Mapa del histórico">
         <MapSurface mapRef={setMap} zoom={12}>
           <DeselectOnMapClick onDeselect={() => setSelectedId(null)} />
           <HistoricLayer incidents={visible} selectedId={selectedId} onSelect={setSelectedId} color={DOT[theme]} selectedColor={SELECTED[theme]} />
@@ -174,7 +173,7 @@ export default function HistoricPage() {
         {selected && <Ficha incident={selected} onClose={() => setSelectedId(null)} />}
       </section>
 
-      <button type="button" className="btn btn-primary explore-toggle" onClick={() => setView((current) => (current === "map" ? "list" : "map"))}>
+      <button type="button" className="btn btn-primary historic-toggle" onClick={() => setView((current) => (current === "map" ? "list" : "map"))}>
         {view === "map" ? <><List size={17} aria-hidden="true" /> Ver tipos</> : <><MapIcon size={17} aria-hidden="true" /> Ver mapa</>}
       </button>
     </div>

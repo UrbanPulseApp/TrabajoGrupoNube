@@ -50,8 +50,8 @@ html[data-theme="dark"] .up-pin { --pin-fg: #0a1214; --pin-ring: #0a1214; }
 /* ---------- Agrupación ---------- */
 .up-cluster {
   display: grid; place-items: center; border-radius: 50%;
-  background: var(--brand); color: var(--on-brand); font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem;
-  border: 3px solid var(--surface); box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand) 30%, transparent), var(--shadow-pop);
+  background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-weight: 600; font-size: 0.875rem;
+  border: 2px solid var(--surface); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 22%, transparent), var(--shadow-pop);
 }
 .up-pin-wrap:focus-visible .up-pin-badge, .up-cluster-wrap:focus-visible .up-cluster { outline: 3px solid var(--focus); outline-offset: 2px; }
 

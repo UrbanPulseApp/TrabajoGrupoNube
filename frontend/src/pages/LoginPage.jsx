@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Eye, EyeOff, LogOut, MapPin, Route, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, LogOut, TriangleAlert } from "lucide-react";
 import { login, registerCitizen } from "../services/AuthService.js";
 import { ROLE_LABEL, useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -52,16 +52,16 @@ export default function LoginPage() {
   return (
     <div className="auth">
       <aside className="auth-aside">
-        <Link className="brand auth-brand" to="/"><BrandMark size={30} /><span>urban<b>pulse</b></span></Link>
+        <Link className="brand auth-brand" to="/"><BrandMark size={28} /><span className="brand-name">UrbanPulse</span><span className="brand-city">Málaga</span></Link>
         <div className="auth-pitch">
           <h1>La ciudad se arregla antes cuando alguien avisa.</h1>
-          <ul>
-            <li><MapPin aria-hidden="true" /><span>Marca el problema en el mapa en segundos.</span></li>
-            <li><Camera aria-hidden="true" /><span>Añade fotos para que el equipo lo encuentre.</span></li>
-            <li><Route aria-hidden="true" /><span>Sigue cada aviso desde que se recibe hasta que se cierra.</span></li>
-          </ul>
+          <ol>
+            <li><span>Marca el problema en el mapa.</span></li>
+            <li><span>Añade fotos para que el equipo lo encuentre.</span></li>
+            <li><span>Sigue el aviso hasta que se cierra.</span></li>
+          </ol>
         </div>
-        <p className="auth-foot">Málaga, 2026</p>
+        <p className="auth-foot mono">Recibida → Validada → Asignada → En curso → Resuelta → Cerrada</p>
       </aside>
 
       <main className="auth-main" id="main">

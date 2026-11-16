@@ -13,7 +13,8 @@ function Topbar() {
     <header className="topbar">
       <Link className="brand" to="/" aria-label="UrbanPulse, ir al mapa">
         <BrandMark />
-        <span>urban<b>pulse</b></span>
+        <span className="brand-name">UrbanPulse</span>
+        <span className="brand-city">Málaga</span>
       </Link>
       <nav className="topbar-nav" aria-label="Principal">
         <NavLink to="/" end className={linkClass}>Explorar</NavLink>
