@@ -134,3 +134,32 @@ El flujo (ramas efímeras desde `main`, Conventional Commits y Pull Request con 
 * Integrar siempre mediante Pull Request.
 * No almacenar contraseñas, tokens ni credenciales en Git.
 * Mantener actualizada la documentación cuando cambie el comportamiento o la configuración.
+
+---
+
+## 7. Solución de problemas
+
+### Aparecen miles de incidencias GECOR en «Explorar»
+
+Las versiones anteriores al commit `47968d4` copiaban el histórico GECOR (5.000 filas) en la tabla `incidents`. Hoy el histórico se sirve solo desde el CSV por `/api/opendata/incidents` («Histórico municipal»), así que esas copias sobran en «Explorar» y en la analítica. Si tu base local las conserva, bórralas (todas comparten el mismo instante de inserción; compruébalo antes con el `SELECT`):
+
+```sql
+-- 1. Localiza el lote: debe devolver ~5000 filas con títulos tipo MlgF-…, 900-…, DIST-…
+SELECT created_at, count(*) FROM incidents GROUP BY created_at HAVING count(*) > 100;
+
+-- 2. Sustituye <instante> por el created_at obtenido y borra el lote con sus dependencias
+BEGIN;
+CREATE TEMP TABLE doomed AS SELECT id FROM incidents WHERE created_at = '<instante>';
+DELETE FROM notifications         WHERE incident_id IN (SELECT id FROM doomed);
+DELETE FROM attachments           WHERE incident_id IN (SELECT id FROM doomed);
+DELETE FROM status_changes        WHERE incident_id IN (SELECT id FROM doomed);
+DELETE FROM assignments           WHERE incident_id IN (SELECT id FROM doomed);
+DELETE FROM external_observations WHERE urban_context_id IN (SELECT id FROM doomed);
+DELETE FROM urban_contexts        WHERE incident_id IN (SELECT id FROM doomed);
+DELETE FROM incidents             WHERE id IN (SELECT id FROM doomed);
+COMMIT;
+```
+
+Ejecútalo con `docker exec -it urbanpulse-postgres psql -U postgres -d urbanpulse`.
+
+> Los tests del backend (`@SpringBootTest`) usan la misma base de datos local, por lo que tras `mvn test` aparecen incidencias de prueba («Semáforo averiado», «Bache peligroso Alameda», «Farola rota en Soho»).
