@@ -12,6 +12,7 @@
 .historic-map { min-width: 0; }
 .historic-toggle { display: none; }
 .historic .map-legend { left: auto; right: 10px; bottom: 26px; }
+.historic-legend li { gap: 10px; }
 
 @media (max-width: 899px) {
   .historic {

@@ -42,6 +42,14 @@
   --st-reopened: #c4552a;
   --st-rejected: #b4455a;
 
+  /* Grupos de tipo del histórico GECOR (solo mapa del histórico) */
+  --cat-cleaning: #0b6b5d;
+  --cat-green_areas: #3a7d2c;
+  --cat-street: #56606b;
+  --cat-lighting: #b57a00;
+  --cat-traffic_light: #c4452a;
+  --cat-other: #6b5bb5;
+
   --shadow-float: 0 1px 0 rgb(8 28 25 / 0.06), 0 8px 20px -6px rgb(8 28 25 / 0.22);
   --shadow-pop: 0 1px 2px rgb(8 28 25 / 0.12), 0 2px 6px rgb(8 28 25 / 0.08);
 
@@ -90,6 +98,13 @@ html[data-theme="dark"] {
   --st-closed: #9aa9bb;
   --st-reopened: #f08a62;
   --st-rejected: #ef8497;
+
+  --cat-cleaning: #4cc2ab;
+  --cat-green_areas: #8bcf6e;
+  --cat-street: #a7b3bf;
+  --cat-lighting: #f4b942;
+  --cat-traffic_light: #f08a62;
+  --cat-other: #a79bef;
 
   --shadow-float: 0 0 0 1px rgb(255 255 255 / 0.04), 0 10px 26px -6px rgb(0 0 0 / 0.7);
   --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.04), 0 2px 8px rgb(0 0 0 / 0.5);

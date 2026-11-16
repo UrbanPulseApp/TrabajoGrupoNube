@@ -1,25 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { useMapEvents } from "react-leaflet";
-import { Building, CalendarCheck, CalendarPlus, ExternalLink, Flag, List, Map as MapIcon, MapPin, Navigation, Search, TriangleAlert, X } from "lucide-react";
+import { Building, CalendarCheck, CalendarPlus, ExternalLink, Flag, Layers, List, Map as MapIcon, MapPin, Navigation, Search, TriangleAlert, X } from "lucide-react";
 import { getOpenDataIncidents } from "../services/IncidentService.js";
 import { formatDate, parseGecorDescription } from "../lib/incidentMeta.js";
 import useDocumentTitle from "../lib/useDocumentTitle.js";
-import { useTheme } from "../context/ThemeContext.jsx";
 import MapSurface from "../components/map/MapSurface.jsx";
 import HistoricLayer from "../components/map/HistoricLayer.jsx";
 import StateBox from "../components/ui/StateBox.jsx";
+import { CategoryIcon } from "../components/ui/icons.jsx";
 import "../components/incidents/incidents.css";
 import "./HistoricPage.css";
 
 const SOURCE_URL = "https://datosabiertos.malaga.eu/dataset/incidencias-resueltas-en-la-via-publica-para-el-ano-2026";
-// Colores del lienzo del mapa (canvas no lee variables CSS): mismos valores que --brand y --accent
-const DOT = { light: "#0b6b5d", dark: "#4cc2ab" };
-const SELECTED = { light: "#d98c05", dark: "#f4b942" };
 
 function DeselectOnMapClick({ onDeselect }) {
   useMapEvents({ click: onDeselect });
   return null;
+}
+
+const LEGEND = [["CLEANING", "Limpieza y residuos"], ["GREEN_AREAS", "Zonas verdes y arbolado"], ["STREET", "Aceras y calzada"], ["LIGHTING", "Alumbrado"], ["TRAFFIC_LIGHT", "Semáforos"], ["OTHER", "Edificios y otros"]];
+
+function HistoricLegend() {
+  return (
+    <details className="map-overlay map-legend historic-legend">
+      <summary><Layers size={15} aria-hidden="true" /> Leyenda</summary>
+      <ul>
+        {LEGEND.map(([group, label]) => (
+          <li key={group}><span className={`up-dot is-mini cat-${group.toLowerCase()}`} aria-hidden="true"><CategoryIcon category={group} /></span>{label}</li>
+        ))}
+      </ul>
+    </details>
+  );
 }
 
 function Ficha({ incident, onClose }) {
@@ -47,7 +59,6 @@ function Ficha({ incident, onClose }) {
 
 export default function HistoricPage() {
   useDocumentTitle("Histórico municipal");
-  const { theme } = useTheme();
   const [dataset, setDataset] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -168,8 +179,9 @@ export default function HistoricPage() {
       <section className={`historic-map map-stage ${selected ? "has-preview" : ""}`} aria-label="Mapa del histórico">
         <MapSurface mapRef={setMap} zoom={12}>
           <DeselectOnMapClick onDeselect={() => setSelectedId(null)} />
-          <HistoricLayer incidents={visible} selectedId={selectedId} onSelect={setSelectedId} color={DOT[theme]} selectedColor={SELECTED[theme]} />
+          <HistoricLayer incidents={visible} selectedId={selectedId} onSelect={setSelectedId} />
         </MapSurface>
+        <HistoricLegend />
         {selected && <Ficha incident={selected} onClose={() => setSelectedId(null)} />}
       </section>
 
