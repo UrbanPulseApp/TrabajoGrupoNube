@@ -13,6 +13,16 @@ SELECT *
 FROM incidents
 ORDER BY created_at DESC
 LIMIT 20 OFFSET 1000;
+
+-- Spring Data runs an extra count query for every Page<T> response.
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT count(*)
+FROM incidents
+WHERE status = 'REPORTED' AND lower(category) = 'street';
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT count(*)
+FROM incidents;
 \else
 \echo Refusing to run benchmark queries outside urbanpulse_k6.
 \quit 3

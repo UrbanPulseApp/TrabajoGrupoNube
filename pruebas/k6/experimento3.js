@@ -61,7 +61,7 @@ if (INCLUDE_MAP) {
         duration: `${TOTAL_SECONDS}s`,
         gracefulStop: '5s',
         exec: 'consultarMapa',
-        tags: { phase: 'mapa', variant: VARIANT },
+        tags: { variant: VARIANT },
     };
 }
 
@@ -111,7 +111,9 @@ const thresholds = {
     'creacion_incidencia_latency{phase:recuperacion}': ['p(95)<500'],
 };
 if (INCLUDE_MAP) {
-    thresholds.consulta_mapa_latency = ['p(95)<500'];
+    thresholds['consulta_mapa_latency{phase:pre-pico}'] = ['p(95)<500'];
+    thresholds['consulta_mapa_latency{phase:pico}'] = ['p(95)<500'];
+    thresholds['consulta_mapa_latency{phase:recuperacion}'] = ['p(95)<500'];
 }
 
 export const options = {
@@ -121,18 +123,29 @@ export const options = {
 };
 
 export function setup() {
-    return login(BASE_URL, USER_EMAIL, USER_PASSWORD);
+    // t0 marks the start of the scenarios so map requests can be assigned to the creation phase running at that time.
+    return { ...login(BASE_URL, USER_EMAIL, USER_PASSWORD), t0: Date.now() };
 }
 
-export function consultarMapa() {
+// The prelude counts as pre-pico: no creation load is applied yet.
+function phaseAt(t0) {
+    const elapsedSeconds = (Date.now() - t0) / 1000;
+    if (elapsedSeconds < SPIKE_START_SECONDS) return 'pre-pico';
+    if (elapsedSeconds < RECOVERY_START_SECONDS) return 'pico';
+    return 'recuperacion';
+}
+
+export function consultarMapa(data) {
+    const phase = phaseAt(data.t0);
+    const tags = { phase, variant: VARIANT };
     const response = http.get(
         `${BASE_URL}/api/incidents?page=0&size=50&sort=-createdAt`,
-        { tags: { operation: 'consulta_mapa', phase: 'mapa', variant: VARIANT } },
+        { tags: { operation: 'consulta_mapa', ...tags } },
     );
 
-    metrics.mapa.latency.add(response.timings.duration, { variant: VARIANT });
-    metrics.mapa.requests.add(1, { variant: VARIANT });
-    metrics.mapa.errors.add(response.status === 200 ? 0 : 1, { variant: VARIANT });
+    metrics.mapa.latency.add(response.timings.duration, tags);
+    metrics.mapa.requests.add(1, tags);
+    metrics.mapa.errors.add(response.status === 200 ? 0 : 1, tags);
     check(response, { 'consulta de mapa responde 200': (r) => r.status === 200 });
     sleep(1);
 }
