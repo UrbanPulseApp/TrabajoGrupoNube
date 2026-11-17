@@ -74,6 +74,7 @@
     │   ├── deployment.md            # Guía de empaquetado y despliegue con Docker
     │   ├── api/acuerdo-api.md       # Contrato REST oficial (Design-First)
     │   ├── adr/                     # Registros de Decisiones de Arquitectura (numeración secuencial)
+    │   ├── design-docs/             # Documentos de diseño (DD-NNN), plantilla y acta de validación con el cliente
     │   └── diagrama-C4/             # Diagramas C4 (.drawio y .png) niveles 1, 2 y 3
     ├── backend/
     │   ├── pom.xml
@@ -195,7 +196,7 @@
 
 Al incorporar nuevas capacidades en siguientes fases del proyecto (como notificaciones activas en tiempo real, gestión documental normativa `KnowledgeDocument`, asistencia inteligente / RAG, o modelos predictivos de correlación histórica y *hotspots*), se deben respetar estas directrices:
 
-1. **Documentar antes o en paralelo:** Crear un nuevo registro secuencial en `docs/adr/` justificando la decisión arquitectónica, actualizar `docs/api/acuerdo-api.md` y sincronizar los diagramas C4 si aparecen nuevos contenedores o componentes significativos.
+1. **Documentar antes o en paralelo:** Los cambios significativos se proponen primero en un documento de diseño (`docs/design-docs/`, ver su `README.md`) que valida el cliente; las decisiones aceptadas se registran después como ADR. Crear un nuevo registro secuencial en `docs/adr/` justificando la decisión arquitectónica, actualizar `docs/api/acuerdo-api.md` y sincronizar los diagramas C4 si aparecen nuevos contenedores o componentes significativos.
 2. **Mantener la resiliencia (RF26):** Cualquier integración con modelos de IA, motores vectoriales o APIs externas debe ejecutarse con aislamiento de fallos (`try-catch`, *timeouts* acotados y *fallbacks*) para no degradar nunca el flujo principal de incidencias.
 3. **Preservar la simplicidad modular:** Reutilizar el paquete `com.urbanpulse.external` (patrón Adapter) y las entidades/servicios existentes antes de introducir infraestructura distribuida compleja.
 
