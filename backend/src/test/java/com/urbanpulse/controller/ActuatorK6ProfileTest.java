@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureMetrics
-@ActiveProfiles("k6")
+@ActiveProfiles({"test", "k6"})
 class ActuatorK6ProfileTest {
 
     @Autowired
