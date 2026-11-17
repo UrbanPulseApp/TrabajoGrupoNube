@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import { bucketByGrid, clusterIcon, incidentIcon, zoomToBucket } from "./mapUtils.jsx";
+import { bucketByGrid, clusterIcon, incidentIcon, spreadLeg, zoomToBucket } from "./mapUtils.jsx";
 import { STATUS_LABEL, categoryLabel } from "../../lib/incidentMeta.js";
 
 const getLatLng = (incident) => [incident.latitude, incident.longitude];
@@ -27,6 +27,7 @@ export default function IncidentMarkersLayer({ incidents, selectedId, onSelect }
         }
         const incident = bucket.items[0];
         const selected = incident.id === selectedId;
+        if (bucket.origin) spreadLeg(bucket).addTo(layer);
         const label = `${incident.title}. ${STATUS_LABEL[incident.status] || incident.status}. ${categoryLabel(incident.category)}`;
         const marker = L.marker(bucket.center, {
           icon: incidentIcon(incident.status, incident.category, selected),

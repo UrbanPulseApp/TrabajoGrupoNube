@@ -81,3 +81,21 @@ export function parseGecorDescription(description = "") {
   [result.type, result.address] = [rest[0] || "", rest[1] || ""];
   return result;
 }
+
+// Los tipos de GECOR son texto libre ("Aceras - Muebles", "Árboles - Poda…"): se agrupan en
+// las categorías de UrbanPulse solo para elegir icono y color en el mapa del histórico.
+const GECOR_GROUPS = [
+  ["GREEN_AREAS", /^(árboles|arboles|jardines|palmeras|parques|mobiliario zonas verdes|aparatos de gimnasia)|poda/],
+  ["LIGHTING", /farola|alumbrado/],
+  ["TRAFFIC_LIGHT", /sem[aá]foro/],
+  ["CLEANING", /^(limpieza|llamada de atención|contenedor|papelera)|basura|muebles|electrodom|mancha|excremento|animales muertos|escombro|recogida/],
+  ["STREET", /^(aceras|calzada|vía pública|via publica|tapas)/],
+];
+const gecorGroupCache = new Map();
+export function gecorCategoryGroup(type = "") {
+  if (gecorGroupCache.has(type)) return gecorGroupCache.get(type);
+  const normalized = String(type).toLocaleLowerCase("es");
+  const group = GECOR_GROUPS.find(([, pattern]) => pattern.test(normalized))?.[0] || "OTHER";
+  gecorGroupCache.set(type, group);
+  return group;
+}

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import L from "leaflet";
 import { useMapEvents } from "react-leaflet";
-import { Layers, List, LocateFixed, Map as MapIcon, Plus, RefreshCw, Search, SearchX, TriangleAlert, X } from "lucide-react";
+import {
+  ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, List, LocateFixed, Map as MapIcon, Plus, RefreshCw, Search, SearchX, SlidersHorizontal, TriangleAlert, X,
+} from "lucide-react";
 import { getMapIncidents } from "../services/IncidentService.js";
 import {
   CATEGORIES, DONE_STATUSES, MALAGA_CENTER, OPEN_STATUSES, STATUSES, STATUS_LABEL,
@@ -54,8 +56,13 @@ export default function ExplorePage() {
   const [map, setMap] = useState(null);
   const [userPosition, setUserPosition] = useState(null);
   const [locating, setLocating] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
+  const [edges, setEdges] = useState({ start: true, end: true });
   const fitted = useRef(false);
   const listRef = useRef(null);
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
+  const filtersRef = useRef(null);
 
   const selectedId = params.get("i");
 
@@ -91,6 +98,7 @@ export default function ExplorePage() {
   }, [scoped]);
 
   const filtered = useMemo(() => (category ? scoped.filter((incident) => incident.category === category) : scoped), [scoped, category]);
+  const openCount = useMemo(() => filtered.filter((incident) => OPEN_STATUSES.includes(incident.status)).length, [filtered]);
   const selected = useMemo(() => incidents.find((incident) => incident.id === selectedId) || null, [incidents, selectedId]);
   const activeId = hoveredId || selectedId;
 
@@ -106,7 +114,7 @@ export default function ExplorePage() {
   const keepVisible = useCallback((incident) => {
     if (!map) return;
     const narrow = window.matchMedia("(max-width: 899px)").matches;
-    map.panInside([incident.latitude, incident.longitude], { paddingTopLeft: [50, 100], paddingBottomRight: [50, narrow ? 320 : 250] });
+    map.panInside([incident.latitude, incident.longitude], { paddingTopLeft: [50, 60], paddingBottomRight: [50, narrow ? 320 : 250] });
   }, [map]);
 
   const flyToIncident = useCallback((incident) => {
@@ -137,12 +145,56 @@ export default function ExplorePage() {
     const index = filtered.findIndex((incident) => incident.id === selectedId);
     if (index >= visibleCount) setVisibleCount(index + 1);
     window.requestAnimationFrame(() => {
-      listRef.current?.querySelector(`[data-incident-id="${selectedId}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      listRef.current?.querySelector(`[data-incident-id="${selectedId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     });
   }, [selectedId, filtered, visibleCount]);
 
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [query, scope, category]);
-  useEffect(() => { map?.invalidateSize(); }, [map, view]);
+  useEffect(() => { map?.invalidateSize(); }, [map, view, listOpen]);
+
+  // Estado de los extremos de la tira horizontal (habilita/deshabilita las flechas)
+  const syncEdges = useCallback(() => {
+    const track = listRef.current;
+    if (!track) return;
+    const start = track.scrollLeft <= 1;
+    const end = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+    setEdges((current) => (current.start === start && current.end === end ? current : { start, end }));
+  }, []);
+
+  useEffect(() => {
+    const track = listRef.current;
+    if (!track) return undefined;
+    let frame = 0;
+    const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(syncEdges); };
+    const observer = new ResizeObserver(onScroll);
+    observer.observe(track);
+    track.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); track.removeEventListener("scroll", onScroll); };
+  }, [syncEdges, listOpen, loading]);
+
+  useEffect(() => { syncEdges(); }, [syncEdges, filtered, visibleCount]);
+
+  // Si una flecha se deshabilita con el foco dentro, el foco pasa a la contraria
+  useEffect(() => {
+    if (edges.start && document.activeElement === prevRef.current) nextRef.current?.focus();
+    if (edges.end && document.activeElement === nextRef.current) prevRef.current?.focus();
+  }, [edges]);
+
+  // Desplaza la tira hasta la siguiente/anterior tarjeta (no un ancho fijo de pantalla)
+  function scrollStrip(direction) {
+    const track = listRef.current;
+    if (!track) return;
+    const cards = [...track.querySelectorAll(".inc-card")];
+    const origin = track.getBoundingClientRect().left + parseFloat(getComputedStyle(track).scrollPaddingLeft || 0);
+    const offsets = cards.map((card) => card.getBoundingClientRect().left - origin);
+    const target = direction > 0
+      ? offsets.find((offset) => offset > 4)
+      : [...offsets].reverse().find((offset) => offset < -4);
+    if (target === undefined) return;
+    const smooth = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+    track.scrollBy({ left: target, behavior: smooth ? "smooth" : "auto" });
+  }
 
   function locateOnMap(incident) {
     select(incident.id);
@@ -175,72 +227,120 @@ export default function ExplorePage() {
     return () => { marker.remove(); };
   }, [map, userPosition]);
 
+  // Sin anchor positioning (p. ej. Firefox) el popover se coloca bajo su botón con coordenadas fijas
+  useEffect(() => {
+    const panel = filtersRef.current;
+    if (!panel || CSS.supports("position-area: block-end")) return undefined;
+    const place = (event) => {
+      if (event.newState !== "open") return;
+      const trigger = document.querySelector('[popovertarget="explore-filters"]');
+      const rect = trigger.getBoundingClientRect();
+      panel.style.top = `${rect.bottom + 6}px`;
+      panel.style.right = `${Math.max(window.innerWidth - rect.right, 8)}px`;
+    };
+    panel.addEventListener("toggle", place);
+    return () => panel.removeEventListener("toggle", place);
+  }, []);
+
   const clearFilters = () => { setQuery(""); setScope("all"); setCategory(""); };
   const hasFilters = query || scope !== "all" || category;
+  const activeFilterCount = (scope !== "all" ? 1 : 0) + (category ? 1 : 0);
   const shown = filtered.slice(0, visibleCount);
 
   return (
-    <div className="explore" data-view={view}>
-      <aside className="explore-panel">
+    <div className="explore" data-view={view} data-list={listOpen ? "open" : "closed"}>
+      <section className="explore-panel" aria-label="Filtros y listado de incidencias">
         <div className="explore-head">
           <div className="explore-title">
-            <h1>Incidencias en la ciudad</h1>
-            <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => load()} disabled={loading} aria-label="Actualizar incidencias" title="Actualizar">
-              <RefreshCw size={16} className={loading ? "spin" : ""} aria-hidden="true" />
+            <h1>Incidencias</h1>
+            <p className="explore-count mono" aria-live="polite">
+              {loading ? "cargando…" : `${filtered.length} ${filtered.length === 1 ? "aviso" : "avisos"} · ${openCount} ${openCount === 1 ? "abierto" : "abiertos"}`}
+            </p>
+            <button type="button" className="btn btn-ghost btn-icon btn-sm explore-refresh" onClick={() => load()} disabled={loading} aria-label="Actualizar incidencias" title="Actualizar">
+              <RefreshCw size={15} className={loading ? "spin" : ""} aria-hidden="true" />
             </button>
           </div>
-          <div className="input-icon">
-            <Search size={17} aria-hidden="true" />
-            <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por título o descripción" aria-label="Buscar incidencias" />
-            {query && <button type="button" className="btn btn-ghost btn-icon btn-sm input-clear" onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={16} aria-hidden="true" /></button>}
+
+          <div className="explore-tools">
+            <div className="input-icon explore-search">
+              <Search size={17} aria-hidden="true" />
+              <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por título o descripción" aria-label="Buscar incidencias" />
+              {query && <button type="button" className="btn btn-ghost btn-icon btn-sm input-clear" onClick={() => setQuery("")} aria-label="Borrar búsqueda"><X size={16} aria-hidden="true" /></button>}
+            </div>
+            <button type="button" className={`btn btn-outline explore-filter-btn ${activeFilterCount ? "is-active" : ""}`} popoverTarget="explore-filters">
+              <SlidersHorizontal size={16} aria-hidden="true" /> Filtros
+              {activeFilterCount > 0 && <span className="filter-badge" aria-label={`${activeFilterCount} activos`}>{activeFilterCount}</span>}
+            </button>
           </div>
-          <div className="segmented" role="group" aria-label="Estado de las incidencias">
-            {SCOPES.map(([value, label]) => <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)}>{label}</button>)}
+
+          <div id="explore-filters" ref={filtersRef} popover="auto" className="filters-popover" aria-label="Filtros">
+            <fieldset className="filters-group">
+              <legend>Estado</legend>
+              <div className="segmented" role="group" aria-label="Estado de las incidencias">
+                {SCOPES.map(([value, label]) => <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)}>{label}</button>)}
+              </div>
+            </fieldset>
+            <fieldset className="filters-group">
+              <legend>Categoría</legend>
+              <div className="filters-categories" role="group" aria-label="Filtrar por categoría">
+                <button type="button" className="chip" aria-pressed={category === ""} onClick={() => setCategory("")}>Todas <span className="chip-count">{scoped.length}</span></button>
+                {CATEGORIES.map(([value, label]) => (
+                  <button key={value} type="button" className="chip" aria-pressed={category === value} onClick={() => setCategory(category === value ? "" : value)}>
+                    <CategoryIcon category={value} />{label}<span className="chip-count">{categoryCounts[value] || 0}</span>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <div className="filters-foot">
+              <span className="mono">{filtered.length} resultados</span>
+              <button type="button" className="link-button" onClick={clearFilters} disabled={!hasFilters}>Quitar filtros</button>
+            </div>
           </div>
-          <div className="chip-row" role="group" aria-label="Filtrar por categoría">
-            <button type="button" className="chip" aria-pressed={category === ""} onClick={() => setCategory("")}>Todas <span className="chip-count">{scoped.length}</span></button>
-            {CATEGORIES.map(([value, label]) => (
-              <button key={value} type="button" className="chip" aria-pressed={category === value} onClick={() => setCategory(category === value ? "" : value)}>
-                <CategoryIcon category={value} />{label}<span className="chip-count">{categoryCounts[value] || 0}</span>
-              </button>
-            ))}
-          </div>
-          <p className="explore-count" aria-live="polite">
-            {loading ? "Cargando…" : `${filtered.length} ${filtered.length === 1 ? "aviso" : "avisos"}`}
-            {!loading && hasFilters && <button type="button" className="link-button" onClick={clearFilters}>Quitar filtros</button>}
-          </p>
         </div>
 
-        <div className="explore-list" ref={listRef}>
-          {loading && <ul>{[0, 1, 2, 3].map((key) => <IncidentCardSkeleton key={key} />)}</ul>}
-          {!loading && error && (
-            <StateBox icon={TriangleAlert} title="No se pudieron cargar las incidencias" error action={<button type="button" className="btn btn-outline btn-sm" onClick={() => load()}>Reintentar</button>}>
-              {error} Comprueba que el backend esté iniciado en el puerto 8080.
-            </StateBox>
-          )}
-          {!loading && !error && filtered.length === 0 && (
-            <StateBox
-              icon={hasFilters ? SearchX : MapIcon}
-              title={hasFilters ? "Ninguna incidencia coincide" : "Aún no hay incidencias"}
-              action={hasFilters
-                ? <button type="button" className="btn btn-outline btn-sm" onClick={clearFilters}>Quitar filtros</button>
-                : <Link className="btn btn-accent btn-sm" to="/reportar"><Plus size={16} aria-hidden="true" /> Reportar la primera</Link>}
-            >
-              {hasFilters ? "Prueba con otra búsqueda o con otra categoría." : "Cuando alguien comunique un aviso aparecerá aquí y en el mapa."}
-            </StateBox>
-          )}
+        <div className="explore-list" id="explore-list" hidden={!listOpen}>
           {!loading && !error && shown.length > 0 && (
-            <ul>
-              {shown.map((incident) => (
-                <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedId} onLocate={locateOnMap} onHover={setHoveredId} />
-              ))}
-            </ul>
+            <>
+              <button ref={prevRef} type="button" className="strip-arrow is-prev" onClick={() => scrollStrip(-1)} disabled={edges.start} aria-label="Incidencias anteriores"><ChevronLeft size={18} aria-hidden="true" /></button>
+              <button ref={nextRef} type="button" className="strip-arrow is-next" onClick={() => scrollStrip(1)} disabled={edges.end} aria-label="Más incidencias"><ChevronRight size={18} aria-hidden="true" /></button>
+            </>
           )}
-          {!loading && filtered.length > shown.length && (
-            <div className="explore-more"><button type="button" className="btn btn-outline btn-sm" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>Mostrar más ({filtered.length - shown.length})</button></div>
-          )}
+          <div className="explore-track" ref={listRef} data-start={edges.start} data-end={edges.end}>
+            {loading && <ul>{[0, 1, 2, 3, 4].map((key) => <IncidentCardSkeleton key={key} />)}</ul>}
+            {!loading && error && (
+              <StateBox icon={TriangleAlert} title="No se pudieron cargar las incidencias" error action={<button type="button" className="btn btn-outline btn-sm" onClick={() => load()}>Reintentar</button>}>
+                {error} Comprueba que el backend esté iniciado en el puerto 8080.
+              </StateBox>
+            )}
+            {!loading && !error && filtered.length === 0 && (
+              <StateBox
+                icon={hasFilters ? SearchX : MapIcon}
+                title={hasFilters ? "Ninguna incidencia coincide" : "Aún no hay incidencias"}
+                action={hasFilters
+                  ? <button type="button" className="btn btn-outline btn-sm" onClick={clearFilters}>Quitar filtros</button>
+                  : <Link className="btn btn-accent btn-sm" to="/reportar"><Plus size={16} aria-hidden="true" /> Reportar la primera</Link>}
+              >
+                {hasFilters ? "Prueba con otra búsqueda o con otra categoría." : "Cuando alguien comunique un aviso aparecerá aquí y en el mapa."}
+              </StateBox>
+            )}
+            {!loading && !error && shown.length > 0 && (
+              <ul>
+                {shown.map((incident) => (
+                  <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedId} onLocate={locateOnMap} onHover={setHoveredId} />
+                ))}
+              </ul>
+            )}
+            {!loading && filtered.length > shown.length && (
+              <div className="explore-more"><button type="button" className="btn btn-outline btn-sm" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>Mostrar más ({filtered.length - shown.length})</button></div>
+            )}
+          </div>
         </div>
-      </aside>
+
+        <button type="button" className="explore-handle" onClick={() => setListOpen((open) => !open)} aria-expanded={listOpen} aria-controls="explore-list">
+          {listOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+          {listOpen ? "Ocultar avisos" : `Mostrar ${filtered.length} avisos`}
+        </button>
+      </section>
 
       <section className={`explore-map map-stage ${selected ? "has-preview" : ""}`} aria-label="Mapa de incidencias">
         <MapSurface mapRef={setMap} center={MALAGA_CENTER} zoom={13}>

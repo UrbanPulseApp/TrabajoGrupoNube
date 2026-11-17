@@ -15,11 +15,11 @@
   color: var(--muted); font-weight: 650; font-size: 0.875rem; border-bottom: 3px solid transparent;
 }
 .wizard-steps button:disabled { cursor: default; }
-.wizard-num { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--sunken); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.wizard-num { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
 .wizard-steps .is-current button { color: var(--ink); border-bottom-color: var(--brand); }
-.wizard-steps .is-current .wizard-num { background: var(--brand); color: var(--on-brand); }
+.wizard-steps .is-current .wizard-num { color: var(--brand); }
 .wizard-steps .is-done button { color: var(--ink-2); }
-.wizard-steps .is-done .wizard-num { background: var(--brand-soft); color: var(--brand-strong); }
+.wizard-steps .is-done .wizard-num { color: var(--ink-2); }
 
 .location-chip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken); color: var(--ink-2); }
 .location-chip.is-set { background: var(--brand-soft); color: var(--ink); }
@@ -27,7 +27,7 @@
 .location-chip b { display: block; font-weight: 650; }
 .map-hint {
   position: absolute; z-index: 850; left: 50%; top: 16px; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 650; box-shadow: var(--shadow-float); white-space: nowrap;
+  padding: 9px 14px; border-radius: var(--r-md); background: var(--ink); color: var(--bg); font-weight: 650; box-shadow: var(--shadow-float); white-space: nowrap;
 }
 
 .category-field { border: 0; padding: 0; margin: 0; min-width: 0; }
@@ -69,7 +69,7 @@
 .dup-list a { font-weight: 650; color: inherit; }
 
 .report-done { display: grid; justify-items: center; gap: 14px; text-align: center; padding: 44px 24px; }
-.report-done-icon { width: 60px; height: 60px; color: var(--st-resolved); }
+.report-done-icon { width: 32px; height: 32px; color: var(--st-resolved); }
 .report-done h1 { outline: none; }
 .report-done p { color: var(--ink-2); max-width: 44ch; }
 .ref-line strong { font-size: 1.1rem; color: var(--ink); letter-spacing: 0.04em; }

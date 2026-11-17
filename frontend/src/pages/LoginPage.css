@@ -20,15 +20,18 @@
   .auth-aside {
     display: flex; flex-direction: column; justify-content: space-between; padding: 28px 44px 32px;
     background: var(--brand-strong); color: #fff;
-    background-image: radial-gradient(circle at 20% 110%, rgb(242 165 28 / 0.28), transparent 46%);
   }
   html[data-theme="dark"] .auth-aside { background-color: #0d2b27; }
   .auth-brand, .auth-brand:hover { color: #fff; }
-  .auth-brand b { color: var(--accent); }
-  .auth-brand .brand-mark rect:not(:last-child) { fill: #fff; }
+  .auth-brand .brand-mark rect { fill: #fff; }
+  .auth-brand .brand-mark polyline { stroke: var(--brand-strong); }
+  .auth-brand .brand-city { color: rgb(255 255 255 / 0.7); border-color: rgb(255 255 255 / 0.35); }
   .auth-pitch h1 { font-size: clamp(2rem, 3.2vw, 2.9rem); line-height: 1.08; max-width: 14ch; }
-  .auth-pitch ul { display: grid; gap: 14px; margin-top: 30px; }
-  .auth-pitch li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; font-size: 1.02rem; max-width: 34ch; color: rgb(255 255 255 / 0.9); }
-  .auth-pitch svg { width: 22px; height: 22px; color: var(--accent); margin-top: 2px; }
-  .auth-foot { color: rgb(255 255 255 / 0.6); font-size: 0.875rem; }
+  .auth-pitch ol { display: grid; margin-top: 34px; max-width: 36ch; counter-reset: pitch; border-top: 1px solid rgb(255 255 255 / 0.25); }
+  .auth-pitch li {
+    display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 12px 0; counter-increment: pitch;
+    border-bottom: 1px solid rgb(255 255 255 / 0.25); font-size: 1.02rem; color: rgb(255 255 255 / 0.92);
+  }
+  .auth-pitch li::before { content: counter(pitch, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.8125rem; color: var(--accent); padding-top: 3px; }
+  .auth-foot { color: rgb(255 255 255 / 0.6); font-size: 0.75rem; }
 }

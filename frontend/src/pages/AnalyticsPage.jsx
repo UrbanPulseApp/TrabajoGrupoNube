@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, CalendarDays, CalendarRange, CircleCheck, Inbox, Lock, RefreshCw, ShieldAlert, TriangleAlert } from "lucide-react";
+import { RefreshCw, ShieldAlert, TriangleAlert } from "lucide-react";
 import { getAnalyticsSummary } from "../services/IncidentService.js";
 import { STATUSES, STATUS_LABEL, categoryLabel } from "../lib/incidentMeta.js";
 import useDocumentTitle from "../lib/useDocumentTitle.js";
@@ -72,12 +72,12 @@ export default function AnalyticsPage() {
   const categoryEntries = data ? Object.entries(data.byCategory || {}).sort((a, b) => b[1] - a[1]) : [];
   const districtEntries = data ? Object.entries(data.byDistrict || {}).sort((a, b) => b[1] - a[1]) : [];
   const kpis = data ? [
-    [Inbox, "Total de avisos", data.totalIncidents, "Registrados en UrbanPulse"],
-    [Activity, "En gestión", data.activeIncidents, "Asignados o en curso"],
-    [CircleCheck, "Resueltos", data.resolvedIncidents, "Pendientes de cierre"],
-    [Lock, "Cerrados", data.closedIncidents, "Finalizados"],
-    [CalendarDays, "Últimos 7 días", data.incidentsLast7Days, "Avisos nuevos"],
-    [CalendarRange, "Últimos 30 días", data.incidentsLast30Days, "Avisos nuevos"],
+    ["Total de avisos", data.totalIncidents, "registrados"],
+    ["En gestión", data.activeIncidents, "asignados o en curso"],
+    ["Resueltos", data.resolvedIncidents, "pendientes de cierre"],
+    ["Cerrados", data.closedIncidents, "finalizados"],
+    ["Últimos 7 días", data.incidentsLast7Days, "avisos nuevos"],
+    ["Últimos 30 días", data.incidentsLast30Days, "avisos nuevos"],
   ] : [];
 
   return (
@@ -88,14 +88,14 @@ export default function AnalyticsPage() {
       </div>
 
       {error && <div className="alert" role="alert"><TriangleAlert aria-hidden="true" /><div><strong>No se pudieron cargar los indicadores</strong><p>{error}</p></div></div>}
-      {loading && !data && <div className="kpi-grid">{[0, 1, 2, 3, 4, 5].map((key) => <span key={key} className="skeleton" style={{ height: 112, borderRadius: 16 }} />)}</div>}
+      {loading && !data && <span className="skeleton" style={{ display: "block", height: 112, marginBottom: 28 }} />}
 
       {data && (
         <>
           <ul className="kpi-grid">
-            {kpis.map(([Icon, label, value, hint]) => (
+            {kpis.map(([label, value, hint]) => (
               <li key={label} className="kpi">
-                <span className="kpi-label"><Icon size={16} aria-hidden="true" /> {label}</span>
+                <span className="kpi-label">{label}</span>
                 <strong className="kpi-value tabular">{Number(value || 0).toLocaleString("es-ES")}</strong>
                 <small>{hint}</small>
               </li>
