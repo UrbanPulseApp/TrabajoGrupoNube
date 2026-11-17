@@ -135,6 +135,7 @@ Revisa [CONTRIBUTING.md](CONTRIBUTING.md) para las reglas de ramas, *Conventiona
 - [Arquitectura del Sistema](docs/architecture.md): estructura general, componentes y modelo C4.
 - [Diseño de la API REST](docs/api/acuerdo-api.md): contrato de endpoints, códigos HTTP y formato de errores.
 - [Decisiones de Arquitectura (ADRs)](docs/adr/): registro formal de decisiones técnicas.
+- [Documentos de Diseño](docs/design-docs/): propuestas de diseño de la iteración 2, plantilla y acta de validación con el cliente.
 - [Guía de Desarrollo Local](docs/development.md): requisitos, instalación y ejecución de pruebas.
 - [Guía de Despliegue](docs/deployment.md): empaquetado y ejecución con Docker.
 
