@@ -74,7 +74,7 @@
     │   ├── deployment.md            # Guía de empaquetado y despliegue con Docker
     │   ├── api/acuerdo-api.md       # Contrato REST oficial (Design-First)
     │   ├── adr/                     # Registros de Decisiones de Arquitectura (numeración secuencial)
-    │   ├── design-docs/             # Documentos de diseño (DD-NNN), plantilla y acta de validación con el cliente
+    │   ├── design-docs/             # Documento de diseño único por iteración, plantilla y acta de validación con el cliente
     │   └── diagrama-C4/             # Diagramas C4 (.drawio y .png) niveles 1, 2 y 3
     ├── backend/
     │   ├── pom.xml
