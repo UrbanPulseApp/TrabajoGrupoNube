@@ -1,6 +1,8 @@
-# DD-NNN: [Título corto y distintivo]
+# Documento de diseño: [Título corto y distintivo]
 
-> **Instrucciones:** copia este fichero como `DD-NNN-slug.md`. Sustituye los campos `[entre corchetes]` y elimina las indicaciones que no necesites. Mantén la sección de alternativas aunque la solución parezca sencilla. Distingue entre propuestas, hechos verificados y cuestiones abiertas. No declares aprobada una decisión sin una revisión real. Incluye **solo decisiones con alto coste de error**, es decir, las difíciles de revertir: modelo de datos, comunicación entre servicios, almacenamiento o seguridad. Los detalles visuales o los nombres internos no pertenecen al documento.
+> **Plantilla de referencia.** En la iteración 2 hay un único documento de diseño, [`documento-diseno-iteracion-2.md`](documento-diseno-iteracion-2.md), que sigue esta estructura con §6 dividida por áreas. Úsala para consultar qué va en cada sección y para copiar el bloque de decisión (`D-XXX-01`) cuando añadas una decisión nueva. Si en una iteración futura hace falta otro documento, cópiala como `documento-diseno-<slug>.md`.
+>
+> **Instrucciones:** sustituye los campos `[entre corchetes]` y elimina las indicaciones que no necesites. Mantén la sección de alternativas aunque la solución parezca sencilla. Distingue entre propuestas, hechos verificados y cuestiones abiertas. No declares aprobada una decisión sin una revisión real. Incluye **solo decisiones con alto coste de error**, es decir, las difíciles de revertir: modelo de datos, comunicación entre servicios, almacenamiento o seguridad. Los detalles visuales o los nombres internos no pertenecen al documento.
 >
 > Basada en la plantilla del profesor y en la anatomía del documento *Documentos de Diseño de Software*. Las convenciones del equipo están en [README.md](README.md).
 
