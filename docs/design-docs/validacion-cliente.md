@@ -1,37 +1,36 @@
-# Acta de validación con el cliente — Iteración 2
+# Acta de validación con el cliente: iteración 2
 
-> Se completa en la issue [#81](https://github.com/UrbanPulseApp/TrabajoGrupoNube/issues/81). Solo las decisiones `Aceptada` o `Modificada por el cliente` pasan a ADR. Después de la sesión, actualiza en cada DD el estado de aprobación (metadatos), el estado de cada decisión (§6 y §8) y la sección *Revisión y resultado* (§12).
+Se completa en la issue [#81](https://github.com/UrbanPulseApp/TrabajoGrupoNube/issues/81). Solo las decisiones Aceptadas o Modificadas por el cliente pasan a ADR. Después de la sesión, actualiza en el [documento de diseño](documento-diseno.md) el estado de aprobación, el estado de cada decisión (secciones 6 y 8) y la sección 12.
 
 | Dato | Valor |
 |---|---|
 | Fecha | [AAAA-MM-DD] |
-| Cliente / representante | [Nombre y rol] |
+| Cliente | Profesor de la asignatura |
 | Asistentes del equipo | [...] |
-| Documentos presentados | [DD-001](DD-001-arquitectura-iteracion-2.md), [DD-002](DD-002-microservicio-contexto-externo.md), [DD-003](DD-003-microservicio-auditoria.md), [DD-004](DD-004-incidencias-imagenes-dashboard.md) |
-| Fecha de envío previo de los DD | [AAAA-MM-DD] |
+| Versión presentada | [0.1 / 1.0] |
 
-## 1. Comentarios relevantes
+## 1. Comentarios
 
-| DD / decisión | Tipo | Comentario | Respuesta o acción |
+| Sección o decisión | Tipo | Comentario | Respuesta o acción |
 |---|---|---|---|
-| [D-xx] | Aclaración / Objeción de fondo / Desacuerdo menor | [...] | [...] |
+| [...] | [Aclaración / Objeción / Desacuerdo menor] | [...] | [...] |
 
 ## 2. Estado final de las decisiones
 
-| Decisión | DD | Estado final | Cambios pedidos por el cliente | ADR reservado (#82) |
+| Decisiones | Sección | Estado final | Cambios pedidos | ADR reservado en #82 |
 |---|---|---|---|---|
-| D-ARQ-01 … D-ARQ-05 | DD-001 | [Aceptada / Rechazada / Modificada por el cliente] | [...] | [ADR-NN] |
-| D-RA1-01 | DD-001 | [...] | [...] | [...] |
-| D-RA2-01, D-RA2-02 | DD-001 | [...] | [...] | [...] |
-| D-RA3-01, D-RA3-02 | DD-001 | [...] | [...] | [...] |
-| D-RA4-01, D-RA4-02 | DD-001 | [...] | [...] | [...] |
-| D-F4-01 … D-F4-07 | DD-002 | [...] | [...] | [...] |
-| D-F5-01 … D-F5-06 | DD-003 | [...] | [...] | [...] |
-| D-F3-01 … D-F3-05 | DD-004 | [...] | [...] | [...] |
-| D-F2-01 … D-F2-03 | DD-004 | [...] | [...] | [...] |
-| D-F1-01 … D-F1-03 | DD-004 | [...] | [...] | [...] |
+| D-ARQ-01 a D-ARQ-05 | 6.1 | [...] | [...] | [...] |
+| D-F1-01 a D-F1-03 | 6.2 | [...] | [...] | [...] |
+| D-F2-01 a D-F2-03 | 6.3 | [...] | [...] | [...] |
+| D-F3-01 a D-F3-05 | 6.4 | [...] | [...] | [...] |
+| D-F4-01 a D-F4-07 | 6.5 | [...] | [...] | [...] |
+| D-F5-01 a D-F5-06 | 6.6 | [...] | [...] | [...] |
+| D-RA1-01 | 6.7 | [...] | [...] | [...] |
+| D-RA2-01 a D-RA2-02 | 6.8 | [...] | [...] | [...] |
+| D-RA3-01 a D-RA3-02 | 6.9 | [...] | [...] | [...] |
+| D-RA4-01 a D-RA4-02 | 6.10 | [...] | [...] | [...] |
 
-> Desglosa una fila por decisión cuando el cliente no acepte un bloque completo de la misma forma.
+Si el cliente no trata igual todas las decisiones de un área, desglosa una fila por decisión.
 
 ## 3. Acuerdos y siguientes pasos
 
