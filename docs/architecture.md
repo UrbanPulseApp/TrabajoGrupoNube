@@ -51,4 +51,4 @@ Siguen una **degradación controlada**: si una fuente externa falla o no está d
 - [**Diagramas de Arquitectura C4**](diagrama-C4/): vistas detalladas de Contexto (Nivel 1), Contenedores (Nivel 2) y Componentes (Nivel 3).
 - [**Acuerdo y Diseño de API REST**](api/acuerdo-api.md): especificación de endpoints, códigos HTTP y estructura de respuesta.
 - [**Registro de Decisiones de Arquitectura (ADRs)**](adr/)
-- [**Documentos de Diseño**](design-docs/): propuestas en curso (iteración 2: paso a monolito + microservicios). Esta página describe el sistema implementado; se actualizará cuando se implementen las decisiones aceptadas.
+- [**Documento de Diseño**](design-docs/): propuesta en curso (iteración 2: paso a monolito + microservicios). Esta página describe el sistema implementado; se actualizará cuando se implementen las decisiones aceptadas.
